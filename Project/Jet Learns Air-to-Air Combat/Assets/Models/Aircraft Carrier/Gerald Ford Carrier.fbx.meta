@@ -1,0 +1,291 @@
+fileFormatVersion: 2
+guid: f2303825298756d48b12a17271b6a249
+ModelImporter:
+  serializedVersion: 21300
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: boats
+    second: {fileID: 2100000, guid: 73c83ada9b855b74e9ce3b0d360db8f5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: controller
+    second: {fileID: 2100000, guid: 149be2f2a3a929a40904afa85bf79fc5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: deck side walks
+    second: {fileID: 2100000, guid: af3ca6b66e77b354ba91b3c55ab78053, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: guns
+    second: {fileID: 2100000, guid: 77e62e8d5283a6a4786859a74861ca2a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lambert1
+    second: {fileID: 2100000, guid: 9a2df500545bc5d40a293b9b8b25eb59, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: metals
+    second: {fileID: 2100000, guid: 7f6131234d3a7444aa2f109733703505, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: radars
+    second: {fileID: 2100000, guid: bd4340bc05cf17a49ac02055075b3a07, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ship
+    second: {fileID: 2100000, guid: 40997ca62addad64ab89a7bc1290559f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ship rest
+    second: {fileID: 2100000, guid: 8b722e900ff3e974c85e2771ae28a6a1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ship_bridge1
+    second: {fileID: 2100000, guid: 4ab956963890350489bab17935d52a5d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ship_interiors
+    second: {fileID: 2100000, guid: 88d420f14c7a5a8468f7d51e13bd0d6b, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_boats_BaseColor
+    second: {fileID: 2800000, guid: 0cf829c687fea7d48a99f557269d7e74, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_boats_Metallic
+    second: {fileID: 2800000, guid: 209e813acfd92a948b243bbe56ced71c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_boats_Roughness
+    second: {fileID: 2800000, guid: 16d17789a78630340a884a76bc4ec50c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_deck side walks_BaseColor
+    second: {fileID: 2800000, guid: d588356d985d0d04bb1ad1d38430e308, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_deck side walks_Metallic
+    second: {fileID: 2800000, guid: 68f49fcd23386dd4998344a26f820edd, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_deck side walks_Roughness
+    second: {fileID: 2800000, guid: 955d0805aa51fb74390720de8df37ff6, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_guns_BaseColor
+    second: {fileID: 2800000, guid: 432b3ea0bdce0b94fb7daffe77393c1d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_guns_Metallic
+    second: {fileID: 2800000, guid: ea938d3f0ec01f84f8ab4727435e0234, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_lambert1_BaseColor
+    second: {fileID: 2800000, guid: 136d666a44dbfe44ab3ad75a3dc1afc1, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_lambert1_Metallic
+    second: {fileID: 2800000, guid: 34e3ee233dc2ee54997b7cec289bb786, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_lambert1_Roughness
+    second: {fileID: 2800000, guid: bcf7e8e7acec0224f92873f387cd290d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_radars_BaseColor
+    second: {fileID: 2800000, guid: 31190c3cac3de2543bc033dc85398382, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_radars_Metallic
+    second: {fileID: 2800000, guid: 43f97f45a262a884ab0480621e88bad2, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_radars_Roughness
+    second: {fileID: 2800000, guid: 0130f35af2945284b9dd9198f4725401, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship rest_BaseColor
+    second: {fileID: 2800000, guid: cb1e9fb3847282f429992f55b2d8e0ed, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship rest_Metallic
+    second: {fileID: 2800000, guid: 51fa81c4fc185bd4aa12309a2633f3ce, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship rest_Roughness
+    second: {fileID: 2800000, guid: 2d7b772bce2a8e74aadbee0420cb6b68, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship_BaseColor
+    second: {fileID: 2800000, guid: 55bb7ffc12c03424295ca2dddcb60681, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship_Metallic
+    second: {fileID: 2800000, guid: 1d114a03d321e5d42858e487ce52af8f, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship_Roughness
+    second: {fileID: 2800000, guid: aa31deaeb51770b4f9d94be95c454f1f, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship_bridge1_BaseColor
+    second: {fileID: 2800000, guid: b66deb04370631144a1886309e31b2fb, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship_bridge1_Metallic
+    second: {fileID: 2800000, guid: 767d04bce3f093749a1f231e61c3426e, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship_bridge1_Roughness
+    second: {fileID: 2800000, guid: 5b7e8879fd2e4ec4daf2b9852352059e, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship_interiors_BaseColor
+    second: {fileID: 2800000, guid: 06ffd51355a2e8840adc399eac9d9f9e, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship_interiors_Metallic
+    second: {fileID: 2800000, guid: 0241974b9b4eb8b44b7889ebee579a65, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: carrier NEW_ship_interiors_Roughness
+    second: {fileID: 2800000, guid: 4421748486063914fbf8727eea883846, type: 3}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 1
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
