@@ -274,8 +274,8 @@ MonoBehaviour:
   sceneCenter: {x: 0, y: 0}
   margin: 1000
   showChunksEnemies: 0
-  minDistanceChunksEnemies: 2
-  numChunksEnemiesSpawn: {x: 5, y: 5}
+  minDistanceChunksEnemies: 0
+  numChunksEnemiesSpawn: {x: 20, y: 20}
   chunkMaterial: {fileID: 2100000, guid: 6c64515b77992c74bae308f8c00c6103, type: 2}
   aircraftCarrierParentObject: {fileID: 7692342718020248039}
   aircraftCarrierGameObject: {fileID: 1572100352888701432, guid: 6c77e38bd3879164d891447dd7c3e89d, type: 3}

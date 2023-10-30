@@ -144,7 +144,6 @@ public class TheaterSettings : MonoBehaviour {
         switch (currentView) {
             case View.THIRD_PERSON:
                 return sceneArray[currentSceneView].GetComponent<SceneSettings>().GetThirdPersonViewTeam(currentTeamView);
-                break;
             default:
                 return null;
         }
@@ -184,7 +183,16 @@ public class TheaterSettings : MonoBehaviour {
 public enum Resolution { LOW_RESOLUTION, HIGH_RESOLUTION };
 public enum Component { WATER, JET, AIRCRAFT_CARRIER };
 public enum Team {
-    BLUE = 0,
-    RED = 1
+    A = 0,
+    B = 1,
+    C = 2,
+    D = 3,
+    E = 4,
+    F = 5,
+    G = 6,
+    H = 7,
+    I = 8,
+    J = 9,
+    K = 10
 };
 public enum View { FIRST_PERSON, THIRD_PERSON, OVERVIEW };

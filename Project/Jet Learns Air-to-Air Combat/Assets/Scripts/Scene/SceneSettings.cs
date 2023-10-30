@@ -292,8 +292,12 @@ public class SceneSettings : MonoBehaviour {
 
     private void BuildJet(Transform jetParentTransform) {
         foreach (Team team in System.Enum.GetValues(typeof(Team))) {
+            GameObject jetPrefab = teamJetGameObject[0];
+            if ((int)team < teamJetGameObject.Count)
+                jetPrefab = teamJetGameObject[(int)team];
+
             GameObject teamJet = Instantiate(
-                teamJetGameObject[(int)team],
+                jetPrefab,
                 teamJetSpawnPoint[(int)team].position,
                 teamJetSpawnPoint[(int)team].rotation,
                 jetParentTransform
