@@ -4,74 +4,26 @@ using UnityEngine;
 
 public class SceneSettings : MonoBehaviour {
 
-    private const float yAircraftCarrier = -20.5f;
-    private const float sizePlane = 10f;
-
-    private const string modelObjectName = "Model";
-    private const string lowResolutionObjectName = "Low Resolution";
-    private const string highResolutionObjectName = "High Resolution";
-
-    private const string thirdPersonViewName = "Third Person View";
-
-    private const string nameJetSpawnPointObject = "Jet Spawn Point";
-
     private static int nextIdScene = 0; 
     private int idScene;
-    [SerializeField]
-    private Resolution resolution;
-    [SerializeField]
-    private Vector2Int sceneSize;
-    [SerializeField]
-    private Vector2Int sceneCenter;
-    [SerializeField]
-    private float margin;
-
-    [Header("Enemies Generation")]
 
     [SerializeField]
-    private bool showChunksEnemies;
-    [SerializeField]
-    private int minDistanceChunksEnemies;
-    [SerializeField]
-    private Vector2Int numChunksEnemiesSpawn;
-    [SerializeField]
-    private Material chunkMaterial;
+    private SceneConfig sceneConfig;
 
-    [Header("Aircraft Carrier Generation")]
+    private GameObject boxParentObject;
 
-    [SerializeField]
     private GameObject aircraftCarrierParentObject;
-    [SerializeField]
-    private GameObject aircraftCarrierGameObject;
-
     private List<GameObject> instanceAircraftCarrierGameObject = new List<GameObject>();
     private List<Vector2Int> listOfValidAircraftCarrierCoords = new List<Vector2Int>();
 
-    [Header("Jet Generation")]
-
-    [SerializeField]
     private GameObject jetsParentObject;
-    [SerializeField]
-    private List <GameObject> teamJetGameObject = new List<GameObject>();
-
     private List<GameObject> instanceJetGameObject = new List<GameObject>();
     private List<Transform> teamJetSpawnPoint = new List<Transform>();
 
-    [Header("Water Generation")]
-
-    [SerializeField]
     private GameObject waterParentObject;
-    [SerializeField]
-    private GameObject waterGameObject;
-    [SerializeField]
-    private Vector2Int waterNumChunks;
-    [SerializeField]
-    private Material waterMaterial;
 
-    [Header("Missile Generation")]
-
-    [SerializeField]
     private GameObject missileParentObject;
+
     private List<HeatEmission> heatEmissionArray = new List<HeatEmission>();
 
     private SceneData sceneData = new SceneData();
@@ -81,20 +33,39 @@ public class SceneSettings : MonoBehaviour {
     }
 
     public void BuildScene() {
+        FindParentsObjects();
+
         idScene = nextIdScene++;
         sceneData.ResetData();
         ClearDataForAircraftCarrier();
         ClearDataForJet();
 
+        BuildSceneBox();
         BuildComponent(Component.WATER, waterParentObject);
         BuildComponent(Component.AIRCRAFT_CARRIER, aircraftCarrierParentObject);
         BuildComponent(Component.JET, jetsParentObject);
         BuildEnemiesChunks();
     }
 
+    private void BuildSceneBox() {
+        boxParentObject.transform.localScale = new Vector3(sceneConfig.sceneSize.x, sceneConfig.sceneSize.y, sceneConfig.sceneSize.z) * sceneConfig.GetSizePlane();
+        boxParentObject.transform.localPosition = new Vector3(0f, sceneConfig.sceneSize.y * sceneConfig.GetSizePlane() / 2f - 0.1f, 0f);
+
+        Transform lowResolutionParent = boxParentObject.transform.Find(sceneConfig.lowResolutionObjectName);
+        Transform highResolutionParent = boxParentObject.transform.Find(sceneConfig.highResolutionObjectName);
+
+        Debug.Assert(lowResolutionParent != null, "Low resolution object for box is missing!");
+        Debug.Assert(highResolutionParent != null, "High resolution object for box is missing!");
+
+        if (sceneConfig.resolution == Resolution.LOW_RESOLUTION)
+            highResolutionParent.gameObject.SetActive(false);
+        else if (sceneConfig.resolution == Resolution.HIGH_RESOLUTION)
+            lowResolutionParent.gameObject.SetActive(false);
+    }
+
     private void BuildComponent(Component nameComponent, GameObject parentObject) {
-        Transform lowResolutionParent = parentObject.transform.Find(lowResolutionObjectName);
-        Transform highResolutionParent = parentObject.transform.Find(highResolutionObjectName);
+        Transform lowResolutionParent = parentObject.transform.Find(sceneConfig.lowResolutionObjectName);
+        Transform highResolutionParent = parentObject.transform.Find(sceneConfig.highResolutionObjectName);
 
         Debug.Assert(lowResolutionParent != null, "Low resolution object for" + nameComponent + "is missing!");
         Debug.Assert(highResolutionParent != null, "High resolution object for" + nameComponent + "is missing!");
@@ -105,9 +76,9 @@ public class SceneSettings : MonoBehaviour {
         while (highResolutionParent.childCount > 0)
             DestroyImmediate(highResolutionParent.GetChild(0).gameObject);
 
-        if (resolution == Resolution.LOW_RESOLUTION) {
+        if (sceneConfig.resolution == Resolution.LOW_RESOLUTION) {
             BuildLowResolutionComponent(nameComponent, lowResolutionParent);
-        } else if (resolution == Resolution.HIGH_RESOLUTION) {
+        } else if (sceneConfig.resolution == Resolution.HIGH_RESOLUTION) {
             BuildHighResolutionComponent(nameComponent, highResolutionParent);
         }
     }
@@ -151,8 +122,8 @@ public class SceneSettings : MonoBehaviour {
         int numTeams = TheaterSettings.GetNumTeams();
 
         listOfValidAircraftCarrierCoords.Clear();
-        for (int x = 0; x < numChunksEnemiesSpawn.x; x++) {
-            for (int y = 0; y < numChunksEnemiesSpawn.y; y++) {
+        for (int x = 0; x < sceneConfig.numChunksEnemiesSpawn.x; x++) {
+            for (int y = 0; y < sceneConfig.numChunksEnemiesSpawn.y; y++) {
                 listOfValidAircraftCarrierCoords.Add(new Vector2Int(x, y));
             }
         }
@@ -173,20 +144,21 @@ public class SceneSettings : MonoBehaviour {
                 teamRotation = TheaterSettings.GetSavedAircraftRotationByTeam(idScene, team);
             }
 
-            GameObject teamAircraftCarrier = Instantiate(aircraftCarrierGameObject, teamPosition, teamRotation, aircraftCarrierParentTransform);
+            GameObject teamAircraftCarrier = Instantiate(sceneConfig.aircraftCarrierGameObject, teamPosition, teamRotation, aircraftCarrierParentTransform);
+            teamAircraftCarrier.transform.localPosition = teamPosition;
             teamAircraftCarrier.name = team + " Aircraft Carrier";
             instanceAircraftCarrierGameObject[(int)team] = teamAircraftCarrier;
 
-            GameObject modelObject = teamAircraftCarrier.transform.Find(modelObjectName).gameObject;
-            if (resolution == Resolution.LOW_RESOLUTION) {
-                modelObject.transform.Find(lowResolutionObjectName).gameObject.SetActive(true);
-                modelObject.transform.Find(highResolutionObjectName).gameObject.SetActive(false);
-            } else if (resolution == Resolution.HIGH_RESOLUTION) {
-                modelObject.transform.Find(lowResolutionObjectName).gameObject.SetActive(false);
-                modelObject.transform.Find(highResolutionObjectName).gameObject.SetActive(true);
+            GameObject modelObject = teamAircraftCarrier.transform.Find(sceneConfig.modelObjectName).gameObject;
+            if (sceneConfig.resolution == Resolution.LOW_RESOLUTION) {
+                modelObject.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(true);
+                modelObject.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(false);
+            } else if (sceneConfig.resolution == Resolution.HIGH_RESOLUTION) {
+                modelObject.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(false);
+                modelObject.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(true);
             }
 
-            teamJetSpawnPoint[(int)team] = teamAircraftCarrier.transform.Find(nameJetSpawnPointObject).transform;
+            teamJetSpawnPoint[(int)team] = teamAircraftCarrier.transform.Find(sceneConfig.nameJetSpawnPointObject).transform;
 
             Debug.Assert(teamJetSpawnPoint[((int)team)] != null, team + " jet spawn point doesn't exists!");
         }
@@ -198,9 +170,19 @@ public class SceneSettings : MonoBehaviour {
 
     private Vector3 GetNextValidCoordsForAircraftCarrier() {
         int validPositions = listOfValidAircraftCarrierCoords.Count;
-        Vector2 length = ((Vector2)(sceneSize) * sizePlane - 2 * margin * Vector2.one) / sizePlane;
-        Vector2 chunkSize = new Vector2(length.x / numChunksEnemiesSpawn.x, length.y / numChunksEnemiesSpawn.y);
-        Vector3 centerFirstChunk = new Vector3(chunkSize.x - length.x, 0f, chunkSize.y - length.y) * sizePlane / 2f;
+        float sizePlane = sceneConfig.GetSizePlane();
+
+        Vector2Int sceneLW = new Vector2Int(sceneConfig.sceneSize.x, sceneConfig.sceneSize.z);
+        Vector2 length = ((Vector2)(sceneLW) * sizePlane - 2 * sceneConfig.margin * Vector2.one) / sizePlane;
+        Vector2 chunkSize = new Vector2(
+            length.x / sceneConfig.numChunksEnemiesSpawn.x, 
+            length.y / sceneConfig.numChunksEnemiesSpawn.y
+        );
+        Vector3 centerFirstChunk = new Vector3(
+            chunkSize.x - length.x, 
+            0f, 
+            chunkSize.y - length.y
+        ) * sizePlane / 2f;
         // new Vector3(x * chunkSize.x, 0f, y * chunkSize.y) * sizePlane + centerFirstChunk
 
         Debug.Assert(validPositions != 0, "No valid positions remained!");
@@ -211,7 +193,7 @@ public class SceneSettings : MonoBehaviour {
         Vector3 centerChunk = new Vector3(chunkVal.x * chunkSize.x, 0f, chunkVal.y * chunkSize.y) * sizePlane + centerFirstChunk;
         Vector3 offsetInChunk = new Vector3(
             (UnityEngine.Random.Range(0, chunkSize.x) - chunkSize.x / 2) * sizePlane,
-            yAircraftCarrier,
+            sceneConfig.yAircraftCarrier,
             (UnityEngine.Random.Range(0, chunkSize.y) - chunkSize.y / 2) * sizePlane
         );
 
@@ -220,7 +202,7 @@ public class SceneSettings : MonoBehaviour {
             int x = listOfValidAircraftCarrierCoords[i].x;
             int y = listOfValidAircraftCarrierCoords[i].y;
 
-            if (Mathf.Abs(chunkVal.x - x) <= minDistanceChunksEnemies && Mathf.Abs(chunkVal.y - y) <= minDistanceChunksEnemies) {
+            if (Mathf.Abs(chunkVal.x - x) <= sceneConfig.minDistanceChunksEnemies && Mathf.Abs(chunkVal.y - y) <= sceneConfig.minDistanceChunksEnemies) {
                 Vector2Int temp = listOfValidAircraftCarrierCoords[i];
                 listOfValidAircraftCarrierCoords[i] = listOfValidAircraftCarrierCoords[validPositions - valToDelete - 1];
                 listOfValidAircraftCarrierCoords[validPositions - valToDelete - 1] = temp;
@@ -241,27 +223,35 @@ public class SceneSettings : MonoBehaviour {
         if (transform.Find(nameEnemiesChunks) != null)
             DestroyImmediate(transform.Find(nameEnemiesChunks).gameObject);
 
-        if (!showChunksEnemies)
+        if (!sceneConfig.showChunksEnemies)
             return;
 
-        Vector2 length = ((Vector2)(sceneSize) * sizePlane - 2 * margin * Vector2.one) / sizePlane;
-        Vector2 chunkSize = new Vector2(length.x / numChunksEnemiesSpawn.x, length.y / numChunksEnemiesSpawn.y);
-        Vector3 centerFirstChunk = new Vector3(chunkSize.x - length.x, 0f, chunkSize.y - length.y) * sizePlane / 2f;
+        Vector2Int sceneLW = new Vector2Int(sceneConfig.sceneSize.x, sceneConfig.sceneSize.z);
+        Vector2 length = ((Vector2)(sceneLW) * sizePlane - 2 * sceneConfig.margin * Vector2.one) / sizePlane;
+        Vector2 chunkSize = new Vector2(
+            length.x / sceneConfig.numChunksEnemiesSpawn.x, 
+            length.y / sceneConfig.numChunksEnemiesSpawn.y
+        );
+        Vector3 centerFirstChunk = new Vector3(
+            chunkSize.x - length.x, 
+            0f, 
+            chunkSize.y - length.y
+        ) * sizePlane / 2f;
 
         GameObject parentObj = new GameObject(nameEnemiesChunks);
 
         parentObj.transform.parent = transform;
         parentObj.transform.localPosition = Vector3.zero;
 
-        for (int x = 0; x < numChunksEnemiesSpawn.x; x++) {
-            for (int y = 0; y < numChunksEnemiesSpawn.y; y++) {
+        for (int x = 0; x < sceneConfig.numChunksEnemiesSpawn.x; x++) {
+            for (int y = 0; y < sceneConfig.numChunksEnemiesSpawn.y; y++) {
                 GameObject chunk = GameObject.CreatePrimitive(PrimitiveType.Plane);
 
                 chunk.gameObject.name = "EnemyChunk_" + x + "_" + y;
                 chunk.transform.parent = parentObj.transform;
                 chunk.transform.localPosition = new Vector3(x * chunkSize.x, 0f, y * chunkSize.y) * sizePlane + centerFirstChunk;
                 chunk.transform.localScale = new Vector3(chunkSize.x, 1f, chunkSize.y);
-                chunk.GetComponent<Renderer>().sharedMaterial = new Material(chunkMaterial);
+                chunk.GetComponent<Renderer>().sharedMaterial = new Material(sceneConfig.chunkMaterial);
 
                 if ((x + y) % 2 == 0)
                     chunk.GetComponent<Renderer>().sharedMaterial.color = Color.black;
@@ -292,9 +282,9 @@ public class SceneSettings : MonoBehaviour {
 
     private void BuildJet(Transform jetParentTransform) {
         foreach (Team team in System.Enum.GetValues(typeof(Team))) {
-            GameObject jetPrefab = teamJetGameObject[0];
-            if ((int)team < teamJetGameObject.Count)
-                jetPrefab = teamJetGameObject[(int)team];
+            GameObject jetPrefab = sceneConfig.teamJetGameObject[0];
+            if ((int)team < sceneConfig.teamJetGameObject.Count)
+                jetPrefab = sceneConfig.teamJetGameObject[(int)team];
 
             GameObject teamJet = Instantiate(
                 jetPrefab,
@@ -303,13 +293,13 @@ public class SceneSettings : MonoBehaviour {
                 jetParentTransform
             );
 
-            GameObject modelObject = teamJet.transform.Find(modelObjectName).gameObject;
-            if (resolution == Resolution.LOW_RESOLUTION) {
-                modelObject.transform.Find(lowResolutionObjectName).gameObject.SetActive(true);
-                modelObject.transform.Find(highResolutionObjectName).gameObject.SetActive(false);
-            } else if (resolution == Resolution.HIGH_RESOLUTION) {
-                modelObject.transform.Find(lowResolutionObjectName).gameObject.SetActive(false);
-                modelObject.transform.Find(highResolutionObjectName).gameObject.SetActive(true);
+            GameObject modelObject = teamJet.transform.Find(sceneConfig.modelObjectName).gameObject;
+            if (sceneConfig.resolution == Resolution.LOW_RESOLUTION) {
+                modelObject.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(true);
+                modelObject.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(false);
+            } else if (sceneConfig.resolution == Resolution.HIGH_RESOLUTION) {
+                modelObject.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(false);
+                modelObject.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(true);
             }
 
             heatEmissionArray.Add(new HeatEmission(teamJet.transform, 1));
@@ -337,18 +327,18 @@ public class SceneSettings : MonoBehaviour {
         waterChunk.gameObject.name = "WaterChunk";
         waterChunk.transform.parent = waterParentTransform;
         waterChunk.transform.localPosition = Vector3.zero;
-        waterChunk.transform.localScale = new Vector3(sceneSize.x, 0f, sceneSize.y);
+        waterChunk.transform.localScale = new Vector3(sceneConfig.sceneSize.x, 0f, sceneConfig.sceneSize.z);
 
-        waterChunk.GetComponent<Renderer>().sharedMaterial.color = new Color(66, 123, 245) / 255f;
+        waterChunk.GetComponent<Renderer>().sharedMaterial = new Material(sceneConfig.waterMaterialLowResolution);
     }
 
     private void BuildHighResolutionWater(Transform waterParentTransform) {
         const float sizePlane = 10f;
-        Vector2 waterSize = new Vector2(1f * sceneSize.x / waterNumChunks.x, 1f * sceneSize.y / waterNumChunks.y);
-        Vector3 centerFirstChunk = new Vector3(waterSize.x - sceneSize.x, 0f, waterSize.y - sceneSize.y) * sizePlane / 2f;
+        Vector2 waterSize = new Vector2(1f * sceneConfig.sceneSize.x / sceneConfig.waterNumChunks.x, 1f * sceneConfig.sceneSize.z / sceneConfig.waterNumChunks.y);
+        Vector3 centerFirstChunk = new Vector3(waterSize.x - sceneConfig.sceneSize.x, 0f, waterSize.y - sceneConfig.sceneSize.z) * sizePlane / 2f;
 
-        for (int x = 0; x < waterNumChunks.x; x++) {
-            for (int y = 0; y < waterNumChunks.y; y++) {
+        for (int x = 0; x < sceneConfig.waterNumChunks.x; x++) {
+            for (int y = 0; y < sceneConfig.waterNumChunks.y; y++) {
                 GameObject waterChunk = GameObject.CreatePrimitive(PrimitiveType.Plane);
 
                 waterChunk.gameObject.name = "WaterChunk_" + x + "_" + y;
@@ -356,8 +346,8 @@ public class SceneSettings : MonoBehaviour {
                 waterChunk.transform.localPosition = new Vector3(x * waterSize.x * sizePlane, 0f, y * waterSize.y * sizePlane) + centerFirstChunk;
                 waterChunk.transform.localScale = new Vector3(waterSize.x, 1f, waterSize.y);
 
-                Material material = new Material(waterMaterial);
-                material.SetVector("_Offset_World", new Vector2(waterNumChunks.x - x, waterNumChunks.y - y));
+                Material material = new Material(sceneConfig.waterMaterial);
+                material.SetVector("_Offset_World", new Vector2(sceneConfig.waterNumChunks.x - x, sceneConfig.waterNumChunks.y - y));
 
                 waterChunk.GetComponent<Renderer>().material = material;
             }
@@ -389,7 +379,7 @@ public class SceneSettings : MonoBehaviour {
 
     private void UpdateSceneDataJet() {
         foreach (Team team in System.Enum.GetValues(typeof(Team))) {
-            sceneData.AddThirdPersonViewTeam(team, instanceJetGameObject[(int)team].transform.Find(thirdPersonViewName));
+            sceneData.AddThirdPersonViewTeam(team, instanceJetGameObject[(int)team].transform.Find(sceneConfig.thirdPersonViewName));
         }
     }
 
@@ -402,6 +392,17 @@ public class SceneSettings : MonoBehaviour {
     }
 
     // -----------------------------------------------------------------
+    // Find
+
+    private void FindParentsObjects() {
+        jetsParentObject = transform.Find(sceneConfig.nameJetParentObject).gameObject;
+        aircraftCarrierParentObject = transform.Find(sceneConfig.nameAircraftCarrierParentObject).gameObject;
+        missileParentObject = transform.Find(sceneConfig.nameMissileParentObject).gameObject;
+        waterParentObject = transform.Find(sceneConfig.nameWaterParentObject).gameObject;
+        boxParentObject = transform.Find(sceneConfig.nameBoxParentObject).gameObject;
+    }
+
+    // -----------------------------------------------------------------
     // Getters and Setters
 
     public static void SetNextIdScene(int id) {
@@ -410,5 +411,13 @@ public class SceneSettings : MonoBehaviour {
 
     public static int GetNextIdScene() {
         return nextIdScene;
+    }
+
+    public SceneConfig GetSceneConfig() {
+        return sceneConfig;
+    }
+
+    public GameObject GetInstancedJetGameObject(Team team) {
+        return instanceJetGameObject[(int)team];
     }
 }

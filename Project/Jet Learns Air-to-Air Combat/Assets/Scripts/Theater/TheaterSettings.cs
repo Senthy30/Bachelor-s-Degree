@@ -1,21 +1,25 @@
 using Cinemachine;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 public class TheaterSettings : MonoBehaviour {
 
-    const string PATH_SAVED_POSITION_ROTATION = "Assets/Data/Aircraft Carrier/theater_data.json";
+    private const string PATH_SAVED_POSITION_ROTATION = "Assets/Data/Aircraft Carrier/theater_data.json";
+
+    public static Resolution resolution;
 
     private static TheaterAircraftsCarrierData theaterAircraftsCarrierData;
+
+    private Vector3 offsetScenes = new Vector3(1f, 5f, 1f);
 
     [SerializeField]
     private bool rebuildScene = false;
     private static bool s_rebuildScene = false;
     [SerializeField]
-    private int numScenes;
+    private Vector3Int numScenes;
+    private int totalNumScenes;
     private int currentSceneToBuild;
 
     private int currentSceneView;
@@ -46,34 +50,66 @@ public class TheaterSettings : MonoBehaviour {
         DestroyPreviousScenes();
         SetDefaultSettings();
 
-        for (currentSceneToBuild = 0; currentSceneToBuild < numScenes; currentSceneToBuild++) {
-            GameObject scene = Instantiate(
-                scenePrefab, 
-                Vector3.zero, 
-                Quaternion.Euler(Vector3.zero),
-                transform
-            );
+        SceneConfig sceneConfig = scenePrefab.GetComponent<SceneSettings>().GetSceneConfig();
+        Vector3 sizeTheater = new Vector3(
+            numScenes.x * (sceneConfig.sceneSize.x + offsetScenes.x),
+            numScenes.y * (sceneConfig.sceneSize.y + offsetScenes.y),
+            numScenes.z * (sceneConfig.sceneSize.z + offsetScenes.z)
+        );
+        Vector3 centerOfFirstScene = new Vector3(
+            sceneConfig.sceneSize.x / 2f - sizeTheater.x / 2f,
+            sceneConfig.sceneSize.y / 2f - sizeTheater.y / 2f,
+            sceneConfig.sceneSize.z / 2f - sizeTheater.z / 2f
+        ) * sceneConfig.GetSizePlane();
 
-            if (editorMode) {
-                scene.GetComponent<SceneSettings>().BuildScene();
-
-                if (s_rebuildScene) {
-                    SceneSettings sceneSettings = scene.GetComponent<SceneSettings>();
-
-                    foreach (Team team in System.Enum.GetValues(typeof(Team))) {
-                        Tuple <Vector3, Quaternion> transformValues = sceneSettings.GetAircraftCarrierPositionAndRotationByTeam(team);
-                        theaterAircraftsCarrierData.GetSceneAircraftsCarrierData(currentSceneToBuild).SetPositionAndRotationByTeam(team, transformValues.Item1, transformValues.Item2); 
-                        theaterAircraftsCarrierData.GetSceneAircraftsCarrierData(currentSceneToBuild).SetPositionAndRotationByTeam(team, transformValues.Item1, transformValues.Item2);
-                    }
-
-                    SerializeTheaterAircraftsCarrierDataInFile();
+        currentSceneToBuild = 0;
+        for (int y = 0; y < numScenes.y; y++) {
+            for (int x = 0; x < numScenes.x; x++) {
+                for (int z = 0; z < numScenes.z; z++) {
+                    Vector3 position = new Vector3(
+                        centerOfFirstScene.x + x * (sceneConfig.sceneSize.x + offsetScenes.x) * sceneConfig.GetSizePlane(),
+                        centerOfFirstScene.y + y * (sceneConfig.sceneSize.y + offsetScenes.y) * sceneConfig.GetSizePlane(),
+                        centerOfFirstScene.z + z * (sceneConfig.sceneSize.z + offsetScenes.z) * sceneConfig.GetSizePlane()
+                    );
+                    BuildScene(position, editorMode);
+                    ++currentSceneToBuild;
                 }
             }
-
-            sceneArray.Add(scene);
         }
 
         SetTransformOfCurrentView();
+    }
+
+    private void BuildScene(Vector3 position, bool editorMode) {
+        GameObject scene = Instantiate(
+            scenePrefab,
+            position,
+            Quaternion.Euler(Vector3.zero),
+            transform
+        );
+        scene.name = "Scene " + currentSceneToBuild;
+
+        gameObject.GetComponent<TheaterPhysicsCalculation>().SetAircraftPhysics(
+            scene.GetComponent<SceneSettings>().GetInstancedJetGameObject(Team.BLUE).GetComponent<AircraftPhysics>()
+        );
+
+        if (editorMode) {
+            scene.GetComponent<SceneSettings>().BuildScene();
+
+            if (s_rebuildScene) {
+                SceneSettings sceneSettings = scene.GetComponent<SceneSettings>();
+
+                foreach (Team team in System.Enum.GetValues(typeof(Team))) {
+                    Tuple<Vector3, Quaternion> transformValues = sceneSettings.GetAircraftCarrierPositionAndRotationByTeam(team);
+                    theaterAircraftsCarrierData.GetSceneAircraftsCarrierData(currentSceneToBuild).SetPositionAndRotationByTeam(team, transformValues.Item1, transformValues.Item2);
+                    theaterAircraftsCarrierData.GetSceneAircraftsCarrierData(currentSceneToBuild).SetPositionAndRotationByTeam(team, transformValues.Item1, transformValues.Item2);
+                }
+
+                SerializeTheaterAircraftsCarrierDataInFile();
+            }
+        }
+
+        sceneArray.Add(scene);
     }
 
     private void ClearTheaterData() {
@@ -91,9 +127,11 @@ public class TheaterSettings : MonoBehaviour {
         currentSceneView = 0;
         currentTeamView = (Team)0;
         currentView = View.THIRD_PERSON;
-        sceneArray = new List<GameObject>(numScenes);
+        totalNumScenes = numScenes.x * numScenes.y * numScenes.z;
+        sceneArray = new List<GameObject>(totalNumScenes);
         SceneSettings.SetNextIdScene(0);
-        theaterAircraftsCarrierData = new TheaterAircraftsCarrierData(numScenes, GetNumTeams());
+        resolution = scenePrefab.GetComponent<SceneSettings>().GetSceneConfig().resolution;
+        theaterAircraftsCarrierData = new TheaterAircraftsCarrierData(totalNumScenes, GetNumTeams());
         if (!s_rebuildScene) {
             DeserializeTheaterAircraftsCarrierDataFromFile();
         }
@@ -183,16 +221,7 @@ public class TheaterSettings : MonoBehaviour {
 public enum Resolution { LOW_RESOLUTION, HIGH_RESOLUTION };
 public enum Component { WATER, JET, AIRCRAFT_CARRIER };
 public enum Team {
-    A = 0,
-    B = 1,
-    C = 2,
-    D = 3,
-    E = 4,
-    F = 5,
-    G = 6,
-    H = 7,
-    I = 8,
-    J = 9,
-    K = 10
+    BLUE = 0,
+    RED = 1
 };
 public enum View { FIRST_PERSON, THIRD_PERSON, OVERVIEW };

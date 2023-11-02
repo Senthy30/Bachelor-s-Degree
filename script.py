@@ -18,7 +18,7 @@ def GetNextName(currName):
     return newName
 
 
-maxCountTeams = 10
+maxCountTeams = 500
 currCountTeam = 0
 currTeamName = 'a'
 while currCountTeam <= maxCountTeams:

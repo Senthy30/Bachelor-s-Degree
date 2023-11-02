@@ -5,13 +5,12 @@ using UnityEngine;
 
 public class AircraftController : MonoBehaviour {
 
+    private enum InputType { HORIZONTAL, VERTICAL, YAW, THRUST }
+
     const float epsilon = 1e-5f;
 
     [SerializeField]
     List<AerodynamicSurfacePhysics> controlSurfaces = null;
-
-    [SerializeField]
-    List<WheelCollider> wheels = null;
 
     [SerializeField]
     float rollControlSensitivity = 0.2f;
@@ -24,22 +23,26 @@ public class AircraftController : MonoBehaviour {
     private float pitchInputTimePressed = 0f;
     [Range(-1, 1)]
     public float pitchInput;
+    private List <AerodynamicSurfacePhysics> pitchSurfacesArray;
 
     private float yawLastInputSign = 0f;
     private float yawInputTimePressed = 0f;
     [Range(-1, 1)]
     public float yawInput;
+    private List<AerodynamicSurfacePhysics> yawSurfacesArray;
 
     private float rollLastInputSign = 0f;
     private float rollInputTimePressed = 0f;
     [Range(-1, 1)]
     public float rollInput;
+    private List<AerodynamicSurfacePhysics> rollSurfacesArray;
 
     private bool flapInputWasPressed;
     private const float maxFlapInput = 0.3f;
     private float flapInputTimePressed = 0f;
     [Range(0, 1)]
     public float flapInput;
+    private List<AerodynamicSurfacePhysics> flapSurfacesArray;
 
     [Range(0, 1)]
     public float thrustInput;
@@ -91,6 +94,11 @@ public class AircraftController : MonoBehaviour {
     private AircraftPhysics aircraftPhysics;
     private GameObject sceneObject;
     private Rigidbody rb;
+
+    private float rollInputSign;
+    private float pitchInputSign;
+    private float yawInputSign;
+    private float thrustInputSign;
     //private Animator animator;
 
     private void Start() {
@@ -105,6 +113,8 @@ public class AircraftController : MonoBehaviour {
         Material engineFlameMaterial = leftFlameObject.GetComponent<Renderer>().material;
         leftFlameObject.GetComponent<Renderer>().material = new Material(engineFlameMaterial);
         rightFlameObject.GetComponent<Renderer>().material = new Material(engineFlameMaterial);
+
+        PrecalculateAndStoreSufaces();
     }
 
     private void Update() {
@@ -116,43 +126,39 @@ public class AircraftController : MonoBehaviour {
     }
 
     private void FixedUpdate() {
-        SetControlSurfecesAngles(pitchInput, rollInput, yawInput, flapInput);
+        SetControlSurfecesAngles();
 
         aircraftPhysics.SetThrustPercent(thrustInput);
-
-        foreach (var wheel in wheels) {
-            wheel.brakeTorque = brakesTorque;
-            // small torque to wake up wheel collider
-            wheel.motorTorque = 0.01f;
-        }
     }
 
-    public void SetControlSurfecesAngles(float pitch, float roll, float yaw, float flap) {
-        foreach (var surface in controlSurfaces) {
-            if (surface == null || !surface.IsControlSurface) 
-                continue;
+    public void SetControlSurfecesAngles() {
+        // pitch
+        foreach (AerodynamicSurfacePhysics surface in pitchSurfacesArray) { 
+            surface.SetFlapAngle(pitchInput * pitchControlSensitivity * surface.InputMultiplier);
+        }
 
-            switch (surface.InputType) {
-                case ControlInputType.Pitch:
-                    surface.SetFlapAngle(pitch * pitchControlSensitivity * surface.InputMultiplier);
-                    break;
-                case ControlInputType.Roll:
-                    surface.SetFlapAngle(roll * rollControlSensitivity * surface.InputMultiplier);
-                    break;
-                case ControlInputType.Yaw:
-                    surface.SetFlapAngle(yaw * yawControlSensitivity * surface.InputMultiplier);
-                    break;
-                case ControlInputType.Flap:
-                    surface.SetFlapAngle(flapInput * surface.InputMultiplier);
-                    break;
-            }
+        // roll
+        foreach (AerodynamicSurfacePhysics surface in rollSurfacesArray) {
+            surface.SetFlapAngle(rollInput * rollControlSensitivity * surface.InputMultiplier);
+        }
+
+        // yaw
+        foreach (AerodynamicSurfacePhysics surface in yawSurfacesArray) {
+            surface.SetFlapAngle(yawInput * yawControlSensitivity * surface.InputMultiplier);
+        }
+
+        // flap 
+        foreach (AerodynamicSurfacePhysics surface in flapSurfacesArray) {
+            surface.SetFlapAngle(flapInput * surface.InputMultiplier);
         }
     }
 
     private void HandleInputsEvent() {
-        HandleSpecificInputEvent("Vertical", ref pitchInputTimePressed, ref pitchInput, ref pitchLastInputSign);
-        HandleSpecificInputEvent("Horizontal", ref rollInputTimePressed, ref rollInput, ref rollLastInputSign);
-        HandleSpecificInputEvent("Yaw", ref yawInputTimePressed, ref yawInput, ref yawLastInputSign);
+        CalculateValueInputAxis();
+
+        HandleSpecificInputEvent(pitchInputSign, ref pitchInputTimePressed, ref pitchInput, ref pitchLastInputSign);
+        HandleSpecificInputEvent(rollInputSign, ref rollInputTimePressed, ref rollInput, ref rollLastInputSign);
+        HandleSpecificInputEvent(yawInputSign, ref yawInputTimePressed, ref yawInput, ref yawLastInputSign);
 
         HandleFlapInputEvent();
 
@@ -164,9 +170,7 @@ public class AircraftController : MonoBehaviour {
         HandleAttackInputEvent();
     }
 
-    private void HandleSpecificInputEvent(string nameInputEvent, ref float valueInputTimePressed, ref float valueInput, ref float lastInputSign) {
-        float valueInputSign = GetValueInputAxis(nameInputEvent);
-
+    private void HandleSpecificInputEvent(float valueInputSign, ref float valueInputTimePressed, ref float valueInput, ref float lastInputSign) {
         if (valueInputSign != lastInputSign) {
             valueInputTimePressed = 0;
             lastInputSign = valueInputSign;
@@ -178,59 +182,36 @@ public class AircraftController : MonoBehaviour {
 
             valueInput += valueInputSign * inputsEventIncreaseCurve.Evaluate(valueInputTimePressed) * Time.deltaTime * valueMultiplierIncrease;
         } else if (valueInput != 0f) {
-            //DecreaseInput(ref valueInputTimePressed);
             valueInputTimePressed += timePressedDecrease * Time.deltaTime;
 
             if (valueInput < 0f) {
                 valueInput += inputsEventDecreaseCurve.Evaluate(Mathf.Abs(valueInput)) * Time.deltaTime * valueMultiplierDecrease;
-                if (valueInput > 0f)
+
+                if (valueInput > 0f) {
                     valueInput = 0f;
+                    return;
+                }
             } else {
                 valueInput -= inputsEventDecreaseCurve.Evaluate(Mathf.Abs(valueInput)) * Time.deltaTime * valueMultiplierDecrease;
-                if (valueInput < 0f)
+
+                if (valueInput < 0f) {
                     valueInput = 0f;
+                    return;
+                }
             }
         }
 
-        if (Mathf.Abs(valueInput) < epsilon)
-            valueInput = 0f;
-        else if (valueInput < -1f)
+        if (valueInput < -1f)
             valueInput = -1f;
         else if (valueInput > 1f)
             valueInput = 1f;
     }
-
-    /*
-    private void HandleSpecificInputEvent(string nameInputEvent, ref float valueInputTimePressed, ref float valueInput) {
-        float valueInputSign = 0;
-        float valueInputAxis = GetValueInputAxis(nameInputEvent);
-
-        if (valueInputAxis > 0)
-            valueInputSign = 1f;
-        else if (valueInputAxis < 0) 
-            valueInputSign = -1f;
-
-        if (valueInputSign != 0) {
-            valueInputTimePressed += valueInputSign * timePressedIncrease * Time.deltaTime;
-            valueInputTimePressed = Mathf.Clamp(valueInputTimePressed, -1f, 1f);
-        } else {
-            DecreaseInput(ref valueInputTimePressed);
-        }
-
-        valueInput = inputsEventCurve.Evaluate(valueInputTimePressed);
-
-        if (Mathf.Abs(valueInput) < epsilon)
-            valueInput = 0f;
-        else if (valueInput < -1f)
-            valueInput = -1f;
-        else if (valueInput > 1f)
-            valueInput = 1f;
-    }
-    */
 
     private void HandleFlapInputEvent() {
         if (Input.GetKeyDown(KeyCode.F))
             flapInputWasPressed = !flapInputWasPressed;
+        else if (flapInput == 0f)
+            return;
 
         if (flapInputWasPressed) {
             flapInputTimePressed += timePressedIncrease * Time.deltaTime;
@@ -246,11 +227,9 @@ public class AircraftController : MonoBehaviour {
     }
 
     private void HandleThrustInputEvent() {
-        float valueInputAxis = GetValueInputAxis("Thrust");
-
-        if (valueInputAxis > 0f) {
+        if (thrustInputSign > 0f) {
             thrustInput += timePressedIncrease * Time.deltaTime;
-        } else if (valueInputAxis < 0f) {
+        } else if (thrustInputSign < 0f) {
             thrustInput -= timePressedDecrease * Time.deltaTime;
         }
 
@@ -296,6 +275,9 @@ public class AircraftController : MonoBehaviour {
     }
 
     private void HandleInputsAnimation() {
+        if (TheaterSettings.resolution == Resolution.LOW_RESOLUTION)
+            return;
+
         leftFlameObject.GetComponent<Renderer>().material.SetFloat("_Thrust", 1f - thrustInput / 2f);
         rightFlameObject.GetComponent<Renderer>().material.SetFloat("_Thrust", 1f - thrustInput / 2f);
 
@@ -312,36 +294,30 @@ public class AircraftController : MonoBehaviour {
         yawAnimator.SetFloat("yawInputAbsolute", Mathf.Abs(yawInput));
     }
 
-    private float GetValueInputAxis(string nameInputEvent) {
-        if (nameInputEvent == "Vertical") {
-            if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-                return -1f;
-            else if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-                return 1f;
-        }
+    private void CalculateValueInputAxis() {
+        if (Input.GetKey(KeyCode.S))
+            pitchInputSign = -1f;
+        else if (Input.GetKey(KeyCode.W))
+            pitchInputSign = 1f;
+        else pitchInputSign = 0f;
 
-        if (nameInputEvent == "Horizontal") {
-            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-                return -1f;
-            else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-                return 1f;
-        }
+        if (Input.GetKey(KeyCode.A))
+            rollInputSign = -1f;
+        else if (Input.GetKey(KeyCode.D))
+            rollInputSign = 1f;
+        else rollInputSign = 0f;
 
-        if (nameInputEvent == "Yaw") {
-            if (Input.GetKey(KeyCode.E))
-                return -1f;
-            else if (Input.GetKey(KeyCode.Q))
-                return 1f;
-        }
+        if (Input.GetKey(KeyCode.E))
+            yawInputSign = -1f;
+        else if (Input.GetKey(KeyCode.Q))
+            yawInputSign = 1f;
+        else yawInputSign = 0f;
 
-        if (nameInputEvent == "Thrust") {
-            if (Input.GetKey(KeyCode.LeftControl))
-                return -1f;
-            else if (Input.GetKey(KeyCode.Space))
-                return 1f;
-        }
-
-        return 0f;
+        if (Input.GetKey(KeyCode.LeftControl))
+            thrustInputSign = -1f;
+        else if (Input.GetKey(KeyCode.Space))
+            thrustInputSign = 1f;
+        else thrustInputSign = 0f;
     }
 
     private void HandleAttackInputEvent() {
@@ -362,6 +338,29 @@ public class AircraftController : MonoBehaviour {
 
         missileArray[missileArray.Count - 1].GetComponent<MissilePhysics>().LaunchMissile();
         missileArray.RemoveAt(missileArray.Count - 1);
+    }
+
+    private void PrecalculateAndStoreSufaces() {
+        pitchSurfacesArray = new List<AerodynamicSurfacePhysics>();
+        rollSurfacesArray = new List<AerodynamicSurfacePhysics>();
+        yawSurfacesArray = new List<AerodynamicSurfacePhysics>();
+        flapSurfacesArray = new List<AerodynamicSurfacePhysics>();
+        foreach (AerodynamicSurfacePhysics surface in controlSurfaces) {
+            switch (surface.InputType) {
+                case ControlInputType.Pitch:
+                    pitchSurfacesArray.Add(surface);
+                    break;
+                case ControlInputType.Roll:
+                    rollSurfacesArray.Add(surface);
+                    break;
+                case ControlInputType.Yaw:
+                    yawSurfacesArray.Add(surface);
+                    break;
+                case ControlInputType.Flap:
+                    flapSurfacesArray.Add(surface);
+                    break;
+            }
+        }
     }
 
     public void SetSceneMissileParentObject(Transform transform) {

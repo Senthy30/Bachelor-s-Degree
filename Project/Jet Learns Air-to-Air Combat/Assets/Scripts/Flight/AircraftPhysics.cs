@@ -103,6 +103,7 @@ public class AircraftPhysics : MonoBehaviour {
             forceApplied += localForceTorqueApplied.Item1;
             torqueApplied += localForceTorqueApplied.Item2;
         }
+        Debug.Log("Done CPU");
 
         return new Tuple<Vector3, Vector3>(forceApplied, torqueApplied);
     }

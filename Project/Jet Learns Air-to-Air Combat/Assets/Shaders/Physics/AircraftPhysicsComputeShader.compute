@@ -1,14 +1,70 @@
-// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
-RWTexture2D<float4> Result;
+const float _PI = 3.1415926535897932384626433832795f;
+const float _Deg2Rad = 0.01745329251994329576923690768f;
+const float _airDensity = 1.2f;
+const int _numSurfaces = 10;
 
-[numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
-{
-    // TODO: insert actual code here!
+struct Forces {
+    float3 force;
+    float3 torque;
+};
 
-    Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+struct SurfaceInfo {
+    float3 airVelocity;
+    float3 relativePosition;
+};
+
+struct AerodynamicSurfaceConfig {
+    float liftCurve;
+    float skinFrictionCoef;
+    float zeroLiftAoA;
+    float stallAnglePos;
+    float stallAngleNeg;
+    float flapChord;
+    float airfoilChordFraction;
+    float span;
+    float aspectRatio;
+};
+
+int _currentSurface;
+float _flapAngle;
+float3 _airVelocity;
+float3 _relativePosition;
+
+AerodynamicSurfaceConfig _surfaceConfig;
+
+RWStructuredBuffer<float> _flapAngleArray;
+RWStructuredBuffer<AerodynamicSurfaceConfig> _surfaceConfigArray;
+RWStructuredBuffer<SurfaceInfo> _surfaceInfoArray;
+RWStructuredBuffer<Forces> _forcesArray;
+
+[numthreads(1, 1, 10)]
+void CSMain (uint3 id : SV_DispatchThreadID) {
+    _currentSurface = id.x * _numSurfaces + id.z;
+    _surfaceConfig = _surfaceConfigArray[id.z];
+    
+    _flapAngle = _flapAngleArray[_currentSurface];
+    _airVelocity = _surfaceInfoArray[_currentSurface].airVelocity;
+    _relativePosition = _surfaceInfoArray[_currentSurface].relativePosition;
+    
+    //_forcesArray[_currentSurface].force = float3(_flapAngle, _flapAngle, _flapAngle);
+    _forcesArray[_currentSurface].force = _relativePosition;
+    _forcesArray[_currentSurface].torque = _airVelocity;
+    
+    /*
+    float zeroLiftAoAInRad = _surfaceConfig.zeroLiftAoA * Deg2Rad;
+    float stallAngleNegInRad = _surfaceConfig.stallAngleNeg * Deg2Rad;
+    float stallAnglePosInRad = _surfaceConfig.stallAnglePos * Deg2Rad;
+    float AR = _surfaceConfig.aspectRatio;
+    
+    // calculate lift-curve slope of a segment of finite aspect ratio surface
+    float coefLiftCurve = _surfaceConfig.liftCurve * AR / (AR + 2 * (AR + 4) / (AR + 2));
+
+        // calculate flap effectiveness factor
+    float theta_f = acos(2 * _surfaceConfig.airfoilChordFraction - 1);
+    float flapEffectFactor = 1 - (theta_f - sin(theta_f)) / PI;
+    
+    _result = flapEffectFactor;
+    */
 }
