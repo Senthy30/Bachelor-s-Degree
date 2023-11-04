@@ -1,8 +1,10 @@
+using Cinemachine.Utility;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class TheaterPhysicsCalculation : MonoBehaviour {
 
+    const float PREDICTION_FRACTION = 0.5f;
     const int numSurfaces = 10;
 
     struct AerodynamicSurfaceConfigShader {
@@ -20,6 +22,7 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
     struct SurfaceInfoShader {
         public Vector3 airVelocity;
         public Vector3 relativePosition;
+        public Quaternion rotation;
     };
 
     struct ForcesShader {
@@ -27,11 +30,12 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
         public Vector3 torque;
     }
 
+    int numAircraftPhysics;
     [SerializeField]
     private ComputeShader aircraftPhysicsShader;
 
     [SerializeField]
-    private AircraftPhysics aircraftPhysics;
+    private List<AircraftPhysics> aircraftPhysicsArray;
 
     [SerializeField]
     private List <AerodynamicSurfaceConfig> aerodynamicSurfaceConfigs;
@@ -45,78 +49,169 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
     private ComputeBuffer surfaceInfoComputeBuffer;
     private ComputeBuffer forcesComputeBuffer;
 
-    private void Awake() {
+    private ForcesShader[] sumForcesShaderPerAircraft;
+    private Vector3[] velocityPredictionPerAircraft;
+    private Vector3[] angularVelocityPredictionPerAircraft;
+    private ForcesShader[] sumForcesShaderPredictionPerAircraft;
+
+    private void Start() {
         InitializeShader();
     }
 
     private void FixedUpdate() {
+        InitializeArrays();
+
+        CalculateSurfaceInfoShaders(false);
+
         UpdateFlapAnglesShader();
         UpdateSurfaceInfoShader();
 
         StartExecutionGPU();
-        CollectDataGPU();
+
+        CollectDataGPU(false);
+
+        CalculatePrediction();
+        CalculateSurfaceInfoShaders(true);
+
+        UpdateSurfaceInfoShader();
+
+        StartExecutionGPU(); 
+            
+        CollectDataGPU(true);
+
+        ApplyForces();
 
         ClearComputeBuffers();
     }
 
     private void StartExecutionGPU() {
         int totalMemory = sizeof(float) * 6;
-        forcesShader = new ForcesShader[numSurfaces];
-        forcesComputeBuffer = new ComputeBuffer(numSurfaces, totalMemory);
+
+        forcesShader = new ForcesShader[numSurfaces * numAircraftPhysics];
+        forcesComputeBuffer = new ComputeBuffer(numSurfaces * numAircraftPhysics, totalMemory);
         forcesComputeBuffer.SetData(forcesShader);
 
         aircraftPhysicsShader.SetBuffer(0, "_forcesArray", forcesComputeBuffer);
 
-        aircraftPhysicsShader.Dispatch(0, 1, 1, numSurfaces);
+        aircraftPhysicsShader.Dispatch(0, 1, 1, 1);
     }
 
-    private void CollectDataGPU() {
+    private void CollectDataGPU(bool usePrediction) {
         forcesComputeBuffer.GetData(forcesShader);
 
-        /*
-        for (int i = 0; i < numSurfaces; i++) {
-            Debug.Log(forcesShader[i].force);
-            Debug.Log(forcesShader[i].torque);
+        for (int j = 0; j < numAircraftPhysics; j++) {
+            for (int i = 0; i < numSurfaces; i++) {
+                if (forcesShader[j * numSurfaces + i].force.IsNaN() == false) {
+                    if (!usePrediction) {
+                        sumForcesShaderPerAircraft[j].force += forcesShader[j * numSurfaces + i].force;
+                    } else {
+                        sumForcesShaderPredictionPerAircraft[j].force += forcesShader[j * numSurfaces + i].force;
+                    }
+                }
+
+                if (forcesShader[j * numSurfaces + i].torque.IsNaN() == false) {
+                    if (!usePrediction) {
+                        sumForcesShaderPerAircraft[j].torque += forcesShader[j * numSurfaces + i].torque;
+                    } else {
+                        sumForcesShaderPredictionPerAircraft[j].torque += forcesShader[j * numSurfaces + i].torque;
+                    }
+                }
+            }
         }
-        Debug.Log("Done GPU");
-        */
+    }
+
+    private void CalculatePrediction() {
+        float thrustPercent;
+        float thrust;
+        Transform _transform;
+        Rigidbody _rigidbody;
+
+        for (int currAircraft = 0; currAircraft < numAircraftPhysics; currAircraft++) {
+            thrustPercent = aircraftPhysicsArray[currAircraft].GetThrustPercent();
+            thrust = aircraftPhysicsArray[currAircraft].GetThrust();
+            _transform = aircraftPhysicsArray[currAircraft].transform;
+            _rigidbody = aircraftPhysicsArray[currAircraft].GetComponent<Rigidbody>();
+
+            // calculate velocity prediction
+            Vector3 force = sumForcesShaderPerAircraft[currAircraft].force + _transform.forward * thrust * thrustPercent + Physics.gravity * _rigidbody.mass;
+            velocityPredictionPerAircraft[currAircraft] = _rigidbody.velocity + Time.fixedDeltaTime * PREDICTION_FRACTION * force / _rigidbody.mass;
+
+            // calculate angular velocity prediction
+            Quaternion inertiaTensorWorldRotation = _rigidbody.rotation * _rigidbody.inertiaTensorRotation;
+            Vector3 torqueChange = Quaternion.Inverse(inertiaTensorWorldRotation) * sumForcesShaderPerAircraft[currAircraft].torque;
+            Vector3 angularVelocityChange = new Vector3(
+                torqueChange.x / _rigidbody.inertiaTensor.x,
+                torqueChange.y / _rigidbody.inertiaTensor.y,
+                torqueChange.z / _rigidbody.inertiaTensor.z
+            );
+
+            angularVelocityPredictionPerAircraft[currAircraft] = _rigidbody.angularVelocity + Time.fixedDeltaTime * PREDICTION_FRACTION * (inertiaTensorWorldRotation * angularVelocityChange);
+        }
     }
 
     private void UpdateFlapAnglesShader() {
-        flapAngleShader = new float[numSurfaces];
+        flapAngleShader = new float[numSurfaces * numAircraftPhysics];
 
-        List <AerodynamicSurfacePhysics> aerodynamicSurfacePhysics = aircraftPhysics.GetAerodynamicSurfaces();
-        for (int i = 0; i < numSurfaces; i++) 
-            flapAngleShader[i] = aerodynamicSurfacePhysics[i].GetFlapAngle();
-        
+        int currDim = 0;
+        for (int currAircraft = 0; currAircraft < numAircraftPhysics; currAircraft++) {
+            List<AerodynamicSurfacePhysics> aerodynamicSurfacePhysics = aircraftPhysicsArray[currAircraft].GetAerodynamicSurfaces();
+
+            for (int currSurface = 0; currSurface < numSurfaces; currSurface++)
+                flapAngleShader[currDim + currSurface] = aerodynamicSurfacePhysics[currSurface].GetFlapAngle();
+            
+            currDim += numSurfaces;
+        }
+
         int totalMemory = sizeof(float);
-        flapAnglesComputeBuffer = new ComputeBuffer(numSurfaces, totalMemory);
+        flapAnglesComputeBuffer = new ComputeBuffer(numAircraftPhysics * numSurfaces, totalMemory);
         flapAnglesComputeBuffer.SetData(flapAngleShader);
 
         aircraftPhysicsShader.SetBuffer(0, "_flapAngleArray", flapAnglesComputeBuffer);
     }
 
     private void UpdateSurfaceInfoShader() {
-        surfaceInfoShader = new SurfaceInfoShader[numSurfaces];
+        int totalMemory = sizeof(float) * 10;
 
-        List<AerodynamicSurfacePhysics> aerodynamicSurfacePhysics = aircraftPhysics.GetAerodynamicSurfaces();
-        Rigidbody rigidbody = aircraftPhysics.gameObject.GetComponent<Rigidbody>();
-        Vector3 velocity = rigidbody.velocity;
-        Vector3 angularVelocity = rigidbody.angularVelocity;
-        Vector3 centerOfMass = rigidbody.worldCenterOfMass;
-
-        for (int i = 0; i < numSurfaces; i++) {
-            Vector3 relativePosition = aerodynamicSurfacePhysics[i].transform.position - centerOfMass;
-
-            surfaceInfoShader[i].airVelocity = -velocity - Vector3.Cross(angularVelocity, relativePosition);
-            surfaceInfoShader[i].relativePosition = relativePosition;
-        }
-
-        int totalMemory = sizeof(float) * 6;
-        surfaceInfoComputeBuffer = new ComputeBuffer(numSurfaces, totalMemory);
+        surfaceInfoComputeBuffer = new ComputeBuffer(numAircraftPhysics * numSurfaces, totalMemory);
         surfaceInfoComputeBuffer.SetData(surfaceInfoShader);
 
         aircraftPhysicsShader.SetBuffer(0, "_surfaceInfoArray", surfaceInfoComputeBuffer);
+    }
+
+    private void CalculateSurfaceInfoShaders(bool usePrediction) {
+        int currDim = 0;
+
+        surfaceInfoShader = new SurfaceInfoShader[numSurfaces * numAircraftPhysics];
+        for (int currAircraft = 0; currAircraft < numAircraftPhysics; currAircraft++) {
+            List<AerodynamicSurfacePhysics> aerodynamicSurfacePhysics = aircraftPhysicsArray[currAircraft].GetAerodynamicSurfaces();
+            Rigidbody rigidbody = aircraftPhysicsArray[currAircraft].gameObject.GetComponent<Rigidbody>();
+            Vector3 velocity = (!usePrediction) ? rigidbody.velocity : velocityPredictionPerAircraft[currAircraft];
+            Vector3 angularVelocity = (!usePrediction) ? rigidbody.angularVelocity : angularVelocityPredictionPerAircraft[currAircraft];
+            Vector3 centerOfMass = rigidbody.worldCenterOfMass;
+
+            for (int currSurface = 0; currSurface < numSurfaces; currSurface++) {
+                Vector3 relativePosition = aerodynamicSurfacePhysics[currSurface].transform.position - centerOfMass;
+
+                surfaceInfoShader[currDim + currSurface].airVelocity = -velocity - Vector3.Cross(angularVelocity, relativePosition);
+                surfaceInfoShader[currDim + currSurface].relativePosition = relativePosition;
+                surfaceInfoShader[currDim + currSurface].rotation = aerodynamicSurfacePhysics[currSurface].transform.rotation;
+            }
+
+            currDim += numSurfaces;
+        }
+
+        if (usePrediction) {
+            surfaceInfoComputeBuffer.Dispose();
+        }
+    }
+
+    private void ApplyForces() {
+        for (int currAircraft = 0; currAircraft < numAircraftPhysics; currAircraft++) {
+            Vector3 forceApplied = (sumForcesShaderPerAircraft[currAircraft].force + sumForcesShaderPredictionPerAircraft[currAircraft].force) / 2f;
+            Vector3 torqueApplied = (sumForcesShaderPerAircraft[currAircraft].torque + sumForcesShaderPredictionPerAircraft[currAircraft].torque) / 2f;
+
+            aircraftPhysicsArray[currAircraft].ApplyForces(forceApplied, torqueApplied);
+        }
     }
 
     private void ClearComputeBuffers() {
@@ -125,10 +220,18 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
         forcesComputeBuffer.Dispose();
     }
 
+    private void InitializeArrays() {
+        sumForcesShaderPerAircraft = new ForcesShader[numAircraftPhysics];
+        sumForcesShaderPredictionPerAircraft = new ForcesShader[numAircraftPhysics];
+        velocityPredictionPerAircraft = new Vector3[numAircraftPhysics];
+        angularVelocityPredictionPerAircraft = new Vector3[numAircraftPhysics];
+    }
+
     private void InitializeShader() {
         int numAerodynamicSurfaces = aerodynamicSurfaceConfigs.Count;
         int totalMemory = sizeof(float) * 9;
 
+        numAircraftPhysics = aircraftPhysicsArray.Count;
         aerodynamicSurfaceConfigShader = new AerodynamicSurfaceConfigShader[numAerodynamicSurfaces];
         for (int i = 0; i < numAerodynamicSurfaces; i++) {
             aerodynamicSurfaceConfigShader[i].liftCurve = aerodynamicSurfaceConfigs[i].liftCurve;
@@ -148,8 +251,8 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
         aircraftPhysicsShader.SetBuffer(0, "_surfaceConfigArray", computeBuffer);
     }
 
-    public void SetAircraftPhysics(AircraftPhysics aircraftPhysics) {
-        this.aircraftPhysics = aircraftPhysics;
+    public void AddAircraftPhysics(AircraftPhysics aircraftPhysics) {
+        this.aircraftPhysicsArray.Add(aircraftPhysics);
     }
 
 }

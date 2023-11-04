@@ -417,7 +417,7 @@ public class SceneSettings : MonoBehaviour {
         return sceneConfig;
     }
 
-    public GameObject GetInstancedJetGameObject(Team team) {
-        return instanceJetGameObject[(int)team];
+    public List <GameObject> GetInstancedJetGameObjects() {
+        return instanceJetGameObject;
     }
 }

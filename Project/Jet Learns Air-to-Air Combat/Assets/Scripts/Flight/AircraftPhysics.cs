@@ -35,11 +35,21 @@ public class AircraftPhysics : MonoBehaviour {
         thrustPercent = percent;
     }
 
+    public float GetThrustPercent() {
+        return thrustPercent;
+    }
+
+    public float GetThrust() {
+        return thrust;
+    }
+
     public List<AerodynamicSurfacePhysics> GetAerodynamicSurfaces() {
         return aerodynamicSurfaces;
     }
 
     private void FixedUpdate() {
+        return;
+
         Tuple<Vector3, Vector3> forceTorqueApplied = CalculateAerodynamicForces(
             rigidbody.velocity,
             rigidbody.angularVelocity,
@@ -71,6 +81,9 @@ public class AircraftPhysics : MonoBehaviour {
             1.2f
         );
 
+        //Debug.Log(velocityPrediction);
+        //Debug.Log(angularVelocityPrediction);
+
         // calculate force and torque that need to be applied
         forceApplied = (forceTorqueApplied.Item1 + forceTorquePredictionApplied.Item1) / 2f;
         torqueApplied = (forceTorqueApplied.Item2 + forceTorquePredictionApplied.Item2) / 2f;
@@ -82,6 +95,12 @@ public class AircraftPhysics : MonoBehaviour {
         float deltaTime = Time.fixedDeltaTime;
 
         CalculateGForce();
+    }
+
+    public void ApplyForces(Vector3 forceApplied, Vector3 torqueApplied) {
+        rigidbody.AddForce(forceApplied);
+        rigidbody.AddTorque(torqueApplied);
+        rigidbody.AddForce(transform.forward * thrust * thrustPercent);
     }
 
     private Tuple <Vector3, Vector3> CalculateAerodynamicForces (Vector3 velocity, Vector3 angularVelocity, Vector3 wind, Vector3 centerOfMass, float airDensity) {
@@ -103,7 +122,6 @@ public class AircraftPhysics : MonoBehaviour {
             forceApplied += localForceTorqueApplied.Item1;
             torqueApplied += localForceTorqueApplied.Item2;
         }
-        Debug.Log("Done CPU");
 
         return new Tuple<Vector3, Vector3>(forceApplied, torqueApplied);
     }

@@ -1,9 +1,43 @@
 #pragma kernel CSMain
 
-const float _PI = 3.1415926535897932384626433832795f;
-const float _Deg2Rad = 0.01745329251994329576923690768f;
-const float _airDensity = 1.2f;
-const int _numSurfaces = 10;
+static const float _PI       =  3.141592653f;
+static const float _Deg2Rad  =  0.017453292f;
+static const float _Rad2Deg  =  57.295779513f;
+
+static const float _airDensity = 1.2f;
+static const int _numSurfaces = 10;
+
+float sqrMagnitude(float3 v) {
+    return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
+float4 qmul(float4 q1, float4 q2) {
+    return float4 (
+        q2.xyz * q1.w + q1.xyz * q2.w + cross(q1.xyz, q2.xyz),
+        q1.w * q2.w - dot(q1.xyz, q2.xyz)
+    );
+}
+
+float3 rotate_vector(float3 v, float4 r) {
+    float4 r_c = r * float4(-1, -1, -1, 1);
+    return qmul(r, qmul(float4(v, 0), r_c)).xyz;
+}
+
+float3 InverseTransformDirection(float3 direction, float4 rotation) {
+    float4 invRotation = float4(-rotation.xyz, rotation.w);
+    return rotate_vector(direction, invRotation);
+}
+
+float3 TransformDirection(float3 direction, float4 rotation) {
+    return rotate_vector(direction, rotation);
+}
+
+float3 Normalize(float3 v) {
+    float magnitude = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (magnitude > 1e-5) 
+        return v / magnitude;
+    return float3(0, 0, 0);
+}
 
 struct Forces {
     float3 force;
@@ -13,6 +47,7 @@ struct Forces {
 struct SurfaceInfo {
     float3 airVelocity;
     float3 relativePosition;
+    float4 rotation;
 };
 
 struct AerodynamicSurfaceConfig {
@@ -28,9 +63,11 @@ struct AerodynamicSurfaceConfig {
 };
 
 int _currentSurface;
+int _currentSurfaceZ;
 float _flapAngle;
 float3 _airVelocity;
 float3 _relativePosition;
+float4 _rotation;
 
 AerodynamicSurfaceConfig _surfaceConfig;
 
@@ -39,32 +76,182 @@ RWStructuredBuffer<AerodynamicSurfaceConfig> _surfaceConfigArray;
 RWStructuredBuffer<SurfaceInfo> _surfaceInfoArray;
 RWStructuredBuffer<Forces> _forcesArray;
 
-[numthreads(1, 1, 10)]
-void CSMain (uint3 id : SV_DispatchThreadID) {
-    _currentSurface = id.x * _numSurfaces + id.z;
-    _surfaceConfig = _surfaceConfigArray[id.z];
+float3 CalculateAerodynamicCoefficientsAtLowAoA(float angleOfAttack, float coefLiftCurve, float zeroLiftAoA) {
+    float3 aerodynamicCoef;
+    
+    // calculate effective attack of angle based on induced attack of angle and lift coefficient
+    float liftCoef = coefLiftCurve * (angleOfAttack - zeroLiftAoA);
+    float inducedAoA = liftCoef / (_PI * _surfaceConfig.aspectRatio);
+    float effectiveAoA = angleOfAttack - zeroLiftAoA - inducedAoA;
+
+    // precalculate sin and cos for effective angle
+    float sinEffectiveAngle = sin(effectiveAoA);
+    float cosEffectiveAngle = cos(effectiveAoA);
+
+    float torqueCoef = 0.25f - 0.175f * (1.0f - 2 * abs(effectiveAoA) / _PI);
+    // tangential force coefficients
+    float tanCoef = _surfaceConfig.skinFrictionCoef * cosEffectiveAngle;
+    // normal force coefficients
+    float normCoef = (liftCoef + tanCoef * sinEffectiveAngle) / cosEffectiveAngle;
+
+    // lift force coefficient
+    aerodynamicCoef.x = liftCoef;
+    // drag force coefficient
+    aerodynamicCoef.y = normCoef * sinEffectiveAngle + tanCoef * cosEffectiveAngle;
+    // torque force coefficient
+    aerodynamicCoef.z = -normCoef * torqueCoef;
+
+    return aerodynamicCoef;
+}
+
+float3 CalculateAerodynamicCoefficientsAtStall(float angleOfAttack, float coefLiftCurve, float zeroLiftAoA, float stallAngleNeg, float stallAnglePos) {
+    float3 aerodynamicCoef;
+
+    float liftCoefLowAoA;
+    float lerpValue;
+    float inducedAoA;
+    float effectiveAoA;
+
+    // calculate effective attack of angle based on induced attack of angle and lift coefficient at low angle of attack
+    if (angleOfAttack > stallAnglePos) {
+        liftCoefLowAoA = coefLiftCurve * (stallAnglePos - zeroLiftAoA);
+        lerpValue = (_PI / 2 - clamp(angleOfAttack, -_PI / 2, _PI / 2)) / (_PI / 2 - stallAnglePos);
+    } else {
+        liftCoefLowAoA = coefLiftCurve * (stallAngleNeg - zeroLiftAoA);
+        lerpValue = (-_PI / 2 - clamp(angleOfAttack, -_PI / 2, _PI / 2)) / (-_PI / 2 - stallAngleNeg);
+    }
+    inducedAoA = lerp(0, liftCoefLowAoA / (_PI * _surfaceConfig.aspectRatio), lerpValue);
+    effectiveAoA = angleOfAttack - zeroLiftAoA - inducedAoA;
+
+    // precalculate sin and cos for effective angle
+    float sinEffectiveAngle = sin(effectiveAoA);
+    float cosEffectiveAngle = cos(effectiveAoA);
+
+    // friction at 90 degree
+    float frictionCoef = -4.26f * 0.01f * _flapAngle * _flapAngle + 2.1f * 0.1f * _flapAngle + 1.98f;
+    float factorCoef = 1.0f / (0.56f + 0.44f * abs(sinEffectiveAngle)) - 0.41f * (1.0f - exp(-17.0f / _surfaceConfig.aspectRatio));
+    float torqueCoef = 0.25f - 0.175f * (1.0f - 2 * abs(effectiveAoA) / _PI);
+
+    // tangential force coefficients
+    float tanCoef = 0.5f * _surfaceConfig.skinFrictionCoef * cosEffectiveAngle;
+    // normal force coefficients
+    float normCoef = frictionCoef * sinEffectiveAngle * factorCoef;
+
+    // lift force coefficient
+    aerodynamicCoef.x = normCoef * cosEffectiveAngle - tanCoef * sinEffectiveAngle;
+    // drag force coefficient
+    aerodynamicCoef.y = normCoef * sinEffectiveAngle + tanCoef * cosEffectiveAngle;
+    // torque force coefficient
+    aerodynamicCoef.z = -normCoef * torqueCoef;
+
+    return aerodynamicCoef;
+}
+
+float3 CalculateAerodynamicCoefficients(float angleOfAttack, float coefLiftCurve, float zeroLiftAoA, float stallAngleNeg, float stallAnglePos) {
+    float3 aerodynamicCoef;
+    
+    float highAngleMode = _Deg2Rad * lerp(15, 5, (_Rad2Deg * _flapAngle + 50) / 100);
+    float lowAngleMode = _Deg2Rad * lerp(15, 5, (-_Rad2Deg * _flapAngle + 50) / 100);
+    
+    float posStallAngleMode = stallAnglePos + highAngleMode;
+    float negStallAngleMode = stallAngleNeg - lowAngleMode;
+    
+    if (stallAngleNeg < angleOfAttack && angleOfAttack < stallAnglePos) {
+        // calculate for low angle of attack
+        aerodynamicCoef = CalculateAerodynamicCoefficientsAtLowAoA(angleOfAttack, coefLiftCurve, zeroLiftAoA);
+    } else {
+        if (angleOfAttack > posStallAngleMode || angleOfAttack < negStallAngleMode) {
+            // calculate at stall mode
+            aerodynamicCoef = CalculateAerodynamicCoefficientsAtStall(angleOfAttack, coefLiftCurve, zeroLiftAoA, stallAngleNeg, stallAnglePos);
+        } else {
+            float lerpValue;
+            float3 aerodynamicCoefLowAoA;
+            float3 aerodynamicCoefStall;
+
+            if (angleOfAttack > stallAnglePos) {
+                lerpValue = (angleOfAttack - stallAnglePos) / (posStallAngleMode - stallAnglePos);
+                aerodynamicCoefLowAoA = CalculateAerodynamicCoefficientsAtLowAoA(stallAnglePos, coefLiftCurve, zeroLiftAoA);
+                aerodynamicCoefStall = CalculateAerodynamicCoefficientsAtStall(posStallAngleMode, coefLiftCurve, zeroLiftAoA, stallAngleNeg, stallAnglePos);
+            } else {
+                lerpValue = (angleOfAttack - stallAngleNeg) / (negStallAngleMode - stallAngleNeg);
+                aerodynamicCoefLowAoA = CalculateAerodynamicCoefficientsAtLowAoA(stallAngleNeg, coefLiftCurve, zeroLiftAoA);
+                aerodynamicCoefStall = CalculateAerodynamicCoefficientsAtStall(negStallAngleMode, coefLiftCurve, zeroLiftAoA, stallAngleNeg, stallAnglePos);
+            }
+
+            aerodynamicCoef = lerp(aerodynamicCoefLowAoA, aerodynamicCoefStall, lerpValue);
+        }
+    }
+
+    return aerodynamicCoef;
+}
+
+[numthreads(100, 10, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID) {     
+    _currentSurface = id.x * _numSurfaces + id.y;
+    _currentSurfaceZ = id.y;
+    _surfaceConfig = _surfaceConfigArray[id.y];
     
     _flapAngle = _flapAngleArray[_currentSurface];
     _airVelocity = _surfaceInfoArray[_currentSurface].airVelocity;
     _relativePosition = _surfaceInfoArray[_currentSurface].relativePosition;
+    _rotation = _surfaceInfoArray[_currentSurface].rotation;
     
-    //_forcesArray[_currentSurface].force = float3(_flapAngle, _flapAngle, _flapAngle);
-    _forcesArray[_currentSurface].force = _relativePosition;
-    _forcesArray[_currentSurface].torque = _airVelocity;
-    
-    /*
-    float zeroLiftAoAInRad = _surfaceConfig.zeroLiftAoA * Deg2Rad;
-    float stallAngleNegInRad = _surfaceConfig.stallAngleNeg * Deg2Rad;
-    float stallAnglePosInRad = _surfaceConfig.stallAnglePos * Deg2Rad;
+    float zeroLiftAoAInRad = _surfaceConfig.zeroLiftAoA * _Deg2Rad;
+    float stallAngleNegInRad = _surfaceConfig.stallAngleNeg * _Deg2Rad;
+    float stallAnglePosInRad = _surfaceConfig.stallAnglePos * _Deg2Rad;
     float AR = _surfaceConfig.aspectRatio;
     
     // calculate lift-curve slope of a segment of finite aspect ratio surface
     float coefLiftCurve = _surfaceConfig.liftCurve * AR / (AR + 2 * (AR + 4) / (AR + 2));
 
-        // calculate flap effectiveness factor
+    // calculate flap effectiveness factor
     float theta_f = acos(2 * _surfaceConfig.airfoilChordFraction - 1);
-    float flapEffectFactor = 1 - (theta_f - sin(theta_f)) / PI;
+    float flapEffectFactor = 1 - (theta_f - sin(theta_f)) / _PI;
     
-    _result = flapEffectFactor;
-    */
+    // empirical factor to account for the effects of viscosity
+    float viscosityFactor = lerp(0.8f, 0.4f, (abs(_flapAngle) * _Rad2Deg - 10) / 50);
+    float deltaCoefLift = coefLiftCurve * flapEffectFactor * viscosityFactor * _flapAngle;
+    
+    // calculate zero-lift angle of attack
+    float zeroLiftAoA = zeroLiftAoAInRad - deltaCoefLift / coefLiftCurve;
+    
+    // calculate maximum positive and negative lift coefficients
+    float deltaMaxCoefLiftFactor = clamp(1 - 0.5f * (_surfaceConfig.airfoilChordFraction - 0.1f) / 0.3f, 0, 1);
+    float deltaMaxCoefLift = deltaCoefLift * deltaMaxCoefLiftFactor;
+    
+    float maxPosCoefLift = coefLiftCurve * (stallAnglePosInRad - zeroLiftAoAInRad) + deltaMaxCoefLift;
+    float maxNegCoefLift = coefLiftCurve * (stallAngleNegInRad - zeroLiftAoAInRad) + deltaMaxCoefLift;
+    
+    // calculate corresponding positive and negative stall angles
+    float stallAnglePos = zeroLiftAoA + maxPosCoefLift / coefLiftCurve;
+    float stallAngleNeg = zeroLiftAoA + maxNegCoefLift / coefLiftCurve; 
+
+    // calculate relative air velocity
+    float3 relativeAirVelocity = InverseTransformDirection(_airVelocity, _rotation);
+    relativeAirVelocity.z = 0;
+    
+    // calculate drag and lift direction
+    float3 normalizedAirVelocity = Normalize(relativeAirVelocity);
+    float3 dragDirection = TransformDirection(normalizedAirVelocity, _rotation);
+    float3 transformForward = TransformDirection(float3(0, 0, 1), _rotation);
+    float3 liftDirection = cross(dragDirection, transformForward);
+    
+    // calculate angle of attack
+    float area = _surfaceConfig.flapChord * _surfaceConfig.span;
+    float dynamicPressure = 0.5f * _airDensity * sqrMagnitude(relativeAirVelocity);
+    float angleOfAttack = atan2(relativeAirVelocity.y, -relativeAirVelocity.x);
+    
+    // calculate aerodynamic coefficients for forces
+    float3 aerodynamicCoef = CalculateAerodynamicCoefficients(angleOfAttack, coefLiftCurve, zeroLiftAoA, stallAngleNeg, stallAnglePos);
+
+    // calculate forces
+    float3 liftForce = liftDirection * aerodynamicCoef.x * dynamicPressure * area;
+    float3 dragForce = dragDirection * aerodynamicCoef.y * dynamicPressure * area;
+    float3 torqueForce = -transformForward * aerodynamicCoef.z * dynamicPressure * area * _surfaceConfig.flapChord;
+    
+    // calculate force and torque applied on the unit
+    _forcesArray[_currentSurface].force = liftForce + dragForce;
+    _forcesArray[_currentSurface].torque = cross(_relativePosition, _forcesArray[_currentSurface].force) + torqueForce;
+    
+    // calculate force and torque applied on the air
 }

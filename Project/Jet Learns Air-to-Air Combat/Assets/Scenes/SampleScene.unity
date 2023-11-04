@@ -1518,7 +1518,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2001784484783021236, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: numScenes.x
-      value: 1
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2001784484783021236, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: numScenes.y
@@ -1526,7 +1526,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2001784484783021236, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: numScenes.z
-      value: 1
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2001784484783021236, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: rebuildScene
@@ -1539,6 +1539,10 @@ PrefabInstance:
     - target: {fileID: 2001784484783021237, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: m_Name
       value: Theater
+      objectReference: {fileID: 0}
+    - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: aircraftPhysicsShader
@@ -1559,34 +1563,34 @@ PrefabInstance:
     - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: aerodynamicSurfaceConfigs.Array.data[2]
       value: 
-      objectReference: {fileID: 11400000, guid: 8f9e5dc0e85fe0248b992fdd7ba52f21, type: 2}
+      objectReference: {fileID: 11400000, guid: 4a6fd563e0686d64d8669ebc2c11e0d4, type: 2}
     - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: aerodynamicSurfaceConfigs.Array.data[3]
       value: 
-      objectReference: {fileID: 11400000, guid: 4a6fd563e0686d64d8669ebc2c11e0d4, type: 2}
+      objectReference: {fileID: 11400000, guid: 8f9e5dc0e85fe0248b992fdd7ba52f21, type: 2}
     - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: aerodynamicSurfaceConfigs.Array.data[4]
       value: 
-      objectReference: {fileID: 11400000, guid: 140bbdf3951fe4648b34dc369447f8b4, type: 2}
+      objectReference: {fileID: 11400000, guid: 9b025634fb773e844ab3581b7838960c, type: 2}
     - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: aerodynamicSurfaceConfigs.Array.data[5]
       value: 
-      objectReference: {fileID: 11400000, guid: 137d7c0a8cf04024e857cc228cb4699c, type: 2}
+      objectReference: {fileID: 11400000, guid: faeec43f929cfcd448fb02149811abff, type: 2}
     - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: aerodynamicSurfaceConfigs.Array.data[6]
       value: 
-      objectReference: {fileID: 11400000, guid: faeec43f929cfcd448fb02149811abff, type: 2}
+      objectReference: {fileID: 11400000, guid: 137d7c0a8cf04024e857cc228cb4699c, type: 2}
     - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: aerodynamicSurfaceConfigs.Array.data[7]
       value: 
-      objectReference: {fileID: 11400000, guid: 9b025634fb773e844ab3581b7838960c, type: 2}
+      objectReference: {fileID: 11400000, guid: 140bbdf3951fe4648b34dc369447f8b4, type: 2}
     - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: aerodynamicSurfaceConfigs.Array.data[8]
       value: 
-      objectReference: {fileID: 11400000, guid: afc51dc231c0edc45bd44226f26e9b4e, type: 2}
+      objectReference: {fileID: 11400000, guid: 45886f14ecea645489f447d9e67a0ff6, type: 2}
     - target: {fileID: 8314450667395914821, guid: cc29de2e79fff1c41af713549b76133f, type: 3}
       propertyPath: aerodynamicSurfaceConfigs.Array.data[9]
       value: 
-      objectReference: {fileID: 11400000, guid: 45886f14ecea645489f447d9e67a0ff6, type: 2}
+      objectReference: {fileID: 11400000, guid: afc51dc231c0edc45bd44226f26e9b4e, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cc29de2e79fff1c41af713549b76133f, type: 3}

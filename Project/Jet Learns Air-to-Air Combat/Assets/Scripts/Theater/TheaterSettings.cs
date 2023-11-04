@@ -89,9 +89,10 @@ public class TheaterSettings : MonoBehaviour {
         );
         scene.name = "Scene " + currentSceneToBuild;
 
-        gameObject.GetComponent<TheaterPhysicsCalculation>().SetAircraftPhysics(
-            scene.GetComponent<SceneSettings>().GetInstancedJetGameObject(Team.BLUE).GetComponent<AircraftPhysics>()
-        );
+        List <GameObject> instancedJets = scene.GetComponent<SceneSettings>().GetInstancedJetGameObjects();
+        TheaterPhysicsCalculation theaterPhysicsCalculation = gameObject.GetComponent<TheaterPhysicsCalculation>();
+        foreach (GameObject jet in instancedJets) 
+            theaterPhysicsCalculation.AddAircraftPhysics(jet.GetComponent<AircraftPhysics>());
 
         if (editorMode) {
             scene.GetComponent<SceneSettings>().BuildScene();

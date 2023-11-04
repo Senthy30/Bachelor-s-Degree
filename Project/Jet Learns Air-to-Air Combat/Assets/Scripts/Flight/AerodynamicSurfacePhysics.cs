@@ -75,6 +75,9 @@ public class AerodynamicSurfacePhysics : MonoBehaviour {
         // calculate aerodynamic coefficients for forces
         Vector3 aerodynamicCoef = CalculateAerodynamicCoefficients(angleOfAttack, coefLiftCurve, zeroLiftAoA, stallAngleNeg, stallAnglePos);
 
+        //Debug.Log(aerodynamicCoef);
+        //Debug.Log(liftDirection);
+
         // calculate forces
         Vector3 liftForce = liftDirection * aerodynamicCoef.x * dynamicPressure * area;
         Vector3 dragForce = dragDirection * aerodynamicCoef.y * dynamicPressure * area;
