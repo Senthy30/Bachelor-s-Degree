@@ -28,6 +28,7 @@ public class SceneConfig : ScriptableObject {
     [Header("Jet Generation")]
 
     public List<GameObject> teamJetGameObject = new List<GameObject>();
+    public List<Texture2D> teamJetTexture;
 
     [Header("Water Generation")]
 
@@ -51,6 +52,7 @@ public class SceneConfig : ScriptableObject {
     public string nameAircraftCarrierParentObject = "Aircraft Carrier";
 
     public string nameMissileParentObject = "Missiles";
+    public string nameMissileStorageParentObject = "Missile Storage";
 
     public string nameBoxParentObject = "Box";
 

@@ -70,6 +70,7 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
 
         CollectDataGPU(false);
 
+        /*
         CalculatePrediction();
         CalculateSurfaceInfoShaders(true);
 
@@ -78,6 +79,7 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
         StartExecutionGPU(); 
             
         CollectDataGPU(true);
+        */
 
         ApplyForces();
 
@@ -93,7 +95,10 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
 
         aircraftPhysicsShader.SetBuffer(0, "_forcesArray", forcesComputeBuffer);
 
-        aircraftPhysicsShader.Dispatch(0, 1, 1, 1);
+        int divideBy = 96;
+        int xDisplatches = Mathf.CeilToInt(1f * numAircraftPhysics / divideBy);
+
+        aircraftPhysicsShader.Dispatch(0, xDisplatches, 1, 1);
     }
 
     private void CollectDataGPU(bool usePrediction) {
@@ -207,8 +212,11 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
 
     private void ApplyForces() {
         for (int currAircraft = 0; currAircraft < numAircraftPhysics; currAircraft++) {
-            Vector3 forceApplied = (sumForcesShaderPerAircraft[currAircraft].force + sumForcesShaderPredictionPerAircraft[currAircraft].force) / 2f;
-            Vector3 torqueApplied = (sumForcesShaderPerAircraft[currAircraft].torque + sumForcesShaderPredictionPerAircraft[currAircraft].torque) / 2f;
+            //Vector3 forceApplied = (sumForcesShaderPerAircraft[currAircraft].force + sumForcesShaderPredictionPerAircraft[currAircraft].force) / 2f;
+            //Vector3 torqueApplied = (sumForcesShaderPerAircraft[currAircraft].torque + sumForcesShaderPredictionPerAircraft[currAircraft].torque) / 2f;
+
+            Vector3 forceApplied = sumForcesShaderPerAircraft[currAircraft].force;
+            Vector3 torqueApplied = sumForcesShaderPerAircraft[currAircraft].torque;
 
             aircraftPhysicsArray[currAircraft].ApplyForces(forceApplied, torqueApplied);
         }

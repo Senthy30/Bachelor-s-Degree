@@ -185,11 +185,12 @@ float3 CalculateAerodynamicCoefficients(float angleOfAttack, float coefLiftCurve
     return aerodynamicCoef;
 }
 
-[numthreads(100, 10, 1)]
+// 6 17 5
+[numthreads(96, 10, 1)]
 void CSMain (uint3 id : SV_DispatchThreadID) {     
     _currentSurface = id.x * _numSurfaces + id.y;
     _currentSurfaceZ = id.y;
-    _surfaceConfig = _surfaceConfigArray[id.y];
+    _surfaceConfig = _surfaceConfigArray[_currentSurfaceZ];
     
     _flapAngle = _flapAngleArray[_currentSurface];
     _airVelocity = _surfaceInfoArray[_currentSurface].airVelocity;

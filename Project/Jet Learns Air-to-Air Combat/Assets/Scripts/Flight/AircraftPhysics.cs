@@ -48,6 +48,7 @@ public class AircraftPhysics : MonoBehaviour {
     }
 
     private void FixedUpdate() {
+
         return;
 
         Tuple<Vector3, Vector3> forceTorqueApplied = CalculateAerodynamicForces(
@@ -57,6 +58,15 @@ public class AircraftPhysics : MonoBehaviour {
             rigidbody.worldCenterOfMass,
             1.2f
         );
+
+        forceApplied = forceTorqueApplied.Item1;
+        torqueApplied = forceTorqueApplied.Item2;
+
+        rigidbody.AddForce(forceApplied);
+        rigidbody.AddTorque(torqueApplied);
+        rigidbody.AddForce(transform.forward * thrust * thrustPercent);
+
+        return;
 
         // calculate velocity prediction
         Vector3 force = forceTorqueApplied.Item1 + transform.forward * thrust * thrustPercent + Physics.gravity * rigidbody.mass;
@@ -91,10 +101,6 @@ public class AircraftPhysics : MonoBehaviour {
         rigidbody.AddForce(forceApplied);
         rigidbody.AddTorque(torqueApplied);
         rigidbody.AddForce(transform.forward * thrust * thrustPercent);
-
-        float deltaTime = Time.fixedDeltaTime;
-
-        CalculateGForce();
     }
 
     public void ApplyForces(Vector3 forceApplied, Vector3 torqueApplied) {

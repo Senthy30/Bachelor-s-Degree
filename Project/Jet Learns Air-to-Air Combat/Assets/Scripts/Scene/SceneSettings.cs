@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class SceneSettings : MonoBehaviour {
@@ -136,6 +137,7 @@ public class SceneSettings : MonoBehaviour {
         foreach (Team team in System.Enum.GetValues(typeof(Team))) {
             Vector3 teamPosition;
             Quaternion teamRotation;
+
             if (TheaterSettings.GetRebuildScene()) {
                 teamPosition = GetNextValidCoordsForAircraftCarrier();
                 teamRotation = GetRandomRotation();
@@ -294,12 +296,28 @@ public class SceneSettings : MonoBehaviour {
             );
 
             GameObject modelObject = teamJet.transform.Find(sceneConfig.modelObjectName).gameObject;
+            GameObject lowResolutionJetModel = modelObject.transform.Find(sceneConfig.lowResolutionObjectName).gameObject;
+            GameObject highResolutionJetModel = modelObject.transform.Find(sceneConfig.highResolutionObjectName).gameObject;
             if (sceneConfig.resolution == Resolution.LOW_RESOLUTION) {
-                modelObject.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(true);
-                modelObject.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(false);
+                lowResolutionJetModel.SetActive(true);
+                highResolutionJetModel.SetActive(false);
             } else if (sceneConfig.resolution == Resolution.HIGH_RESOLUTION) {
-                modelObject.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(false);
-                modelObject.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(true);
+                lowResolutionJetModel.SetActive(false);
+                highResolutionJetModel.SetActive(true);
+            }
+
+            GameObject missileStorageParent = teamJet.transform.Find(sceneConfig.nameMissileStorageParentObject).gameObject;
+            int countChilds = missileStorageParent.transform.childCount;
+            for (int child = 0; child < countChilds; child++) {
+                GameObject missile = missileStorageParent.transform.GetChild(child).gameObject;
+
+                if (sceneConfig.resolution == Resolution.LOW_RESOLUTION) {
+                    missile.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(true);
+                    missile.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(false);
+                } else if (sceneConfig.resolution == Resolution.HIGH_RESOLUTION) {
+                    missile.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(false);
+                    missile.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(true);
+                }
             }
 
             heatEmissionArray.Add(new HeatEmission(teamJet.transform, 1));
