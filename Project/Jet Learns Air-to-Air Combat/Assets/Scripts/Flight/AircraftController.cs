@@ -71,6 +71,7 @@ public class AircraftController : MonoBehaviour {
     [SerializeField]
     private Animator yawAnimator;
 
+    private bool gearInputWasPressed;
     private bool gearIsClosed;
     private bool gearAnimationIsRunning;
     [SerializeField]
@@ -84,8 +85,8 @@ public class AircraftController : MonoBehaviour {
     private GameObject rightFlameObject;
 
     [Header("Missile")]
-    [SerializeField]
-    private GameObject missileStorageObject;
+    private bool attackInputWasPressed;
+    [SerializeField] private GameObject missileStorageObject;
     private Transform sceneMissileParentObject;
     private List<GameObject> missileArray = new List<GameObject>();
 
@@ -107,8 +108,12 @@ public class AircraftController : MonoBehaviour {
 
         Cursor.lockState = CursorLockMode.Locked;
 
+        gearInputWasPressed = false;
         gearIsClosed = false;
         gearAnimationIsRunning = false;
+
+        flapInputWasPressed = false;
+        attackInputWasPressed = false;
 
         Material engineFlameMaterial = leftFlameObject.GetComponent<Renderer>().material;
         leftFlameObject.GetComponent<Renderer>().material = new Material(engineFlameMaterial);
@@ -119,10 +124,6 @@ public class AircraftController : MonoBehaviour {
 
     private void Update() {
         HandleInputsEvent();
-
-        if (Input.GetKeyDown(KeyCode.B)) {
-            brakesTorque = brakesTorque > 0 ? 0 : 100f;
-        }
     }
 
     private void FixedUpdate() {
@@ -154,8 +155,6 @@ public class AircraftController : MonoBehaviour {
     }
 
     private void HandleInputsEvent() {
-        CalculateValueInputAxis();
-
         HandleSpecificInputEvent(pitchInputSign, ref pitchInputTimePressed, ref pitchInput, ref pitchLastInputSign);
         HandleSpecificInputEvent(rollInputSign, ref rollInputTimePressed, ref rollInput, ref rollLastInputSign);
         HandleSpecificInputEvent(yawInputSign, ref yawInputTimePressed, ref yawInput, ref yawLastInputSign);
@@ -208,9 +207,7 @@ public class AircraftController : MonoBehaviour {
     }
 
     private void HandleFlapInputEvent() {
-        if (Input.GetKeyDown(KeyCode.F))
-            flapInputWasPressed = !flapInputWasPressed;
-        else if (flapInput == 0f)
+        if (!flapInputWasPressed && flapInput == 0f)
             return;
 
         if (flapInputWasPressed) {
@@ -237,7 +234,7 @@ public class AircraftController : MonoBehaviour {
     }
 
     private void HandleGearInputEvent() {
-        if (Input.GetKeyDown(KeyCode.G) && !gearAnimationIsRunning) {
+        if (gearInputWasPressed && !gearAnimationIsRunning) {
             if (!gearIsClosed) {
                 gearAnimator.SetBool("startCloseGearAnimation", true);
             } else {
@@ -248,6 +245,7 @@ public class AircraftController : MonoBehaviour {
             }
 
             gearAnimationIsRunning = true;
+            gearInputWasPressed = false;
             return;
         }
 
@@ -275,7 +273,7 @@ public class AircraftController : MonoBehaviour {
     }
 
     private void HandleInputsAnimation() {
-        if (TheaterSettings.resolution == Resolution.LOW_RESOLUTION)
+        if (TheaterData.GetResolution() == Resolution.LOW_RESOLUTION)
             return;
 
         leftFlameObject.GetComponent<Renderer>().material.SetFloat("_Thrust", 1f - thrustInput / 2f);
@@ -294,35 +292,10 @@ public class AircraftController : MonoBehaviour {
         yawAnimator.SetFloat("yawInputAbsolute", Mathf.Abs(yawInput));
     }
 
-    private void CalculateValueInputAxis() {
-        if (Input.GetKey(KeyCode.S))
-            pitchInputSign = -1f;
-        else if (Input.GetKey(KeyCode.W))
-            pitchInputSign = 1f;
-        else pitchInputSign = 0f;
-
-        if (Input.GetKey(KeyCode.A))
-            rollInputSign = -1f;
-        else if (Input.GetKey(KeyCode.D))
-            rollInputSign = 1f;
-        else rollInputSign = 0f;
-
-        if (Input.GetKey(KeyCode.E))
-            yawInputSign = -1f;
-        else if (Input.GetKey(KeyCode.Q))
-            yawInputSign = 1f;
-        else yawInputSign = 0f;
-
-        if (Input.GetKey(KeyCode.LeftControl))
-            thrustInputSign = -1f;
-        else if (Input.GetKey(KeyCode.Space))
-            thrustInputSign = 1f;
-        else thrustInputSign = 0f;
-    }
-
     private void HandleAttackInputEvent() {
-        if (Input.GetKeyDown(KeyCode.Mouse1)) {
+        if (attackInputWasPressed) {
             LaunchMissile();
+            attackInputWasPressed = false;
         }
     }
 
@@ -345,6 +318,7 @@ public class AircraftController : MonoBehaviour {
         rollSurfacesArray = new List<AerodynamicSurfacePhysics>();
         yawSurfacesArray = new List<AerodynamicSurfacePhysics>();
         flapSurfacesArray = new List<AerodynamicSurfacePhysics>();
+
         foreach (AerodynamicSurfacePhysics surface in controlSurfaces) {
             switch (surface.InputType) {
                 case ControlInputType.Pitch:
@@ -375,4 +349,54 @@ public class AircraftController : MonoBehaviour {
         foreach (Transform child in missileStorageObject.transform)
             missileArray.Add(child.gameObject);
     }
+
+    // Input getters
+
+    public float GetPitchInput() {
+        return pitchInputSign;
+    }
+
+    public float GetRollInput() {
+        return rollInputSign;
+    }
+
+    public float GetYawInput() {
+        return yawInputSign;
+    }
+
+    public float GetThrustInput() {
+        return thrustInputSign;
+    }
+
+    // Input setters 
+
+    public void SetPitchInput(float value) {
+        pitchInputSign = value;
+    }
+
+    public void SetRollInput(float value) {
+        rollInputSign = value;
+    }
+
+    public void SetYawInput(float value) {
+        yawInputSign = value;
+    }
+
+    public void SetThrustInput(float value) {
+        thrustInputSign = value;
+    }
+
+    public void TriggerFlapInput() {
+        flapInputWasPressed = !flapInputWasPressed;
+    }
+
+    public void TriggerGearInput() {
+        gearInputWasPressed = !gearInputWasPressed;
+    }
+
+    public void TriggerAttackInput() {
+        attackInputWasPressed = !attackInputWasPressed;
+    }
+
+
 }

@@ -4,6 +4,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
+/*
 [CustomEditor(typeof(SceneSettings))]
 public class SceneSettingsEditor : Editor {
     
@@ -18,3 +19,4 @@ public class SceneSettingsEditor : Editor {
     }
 
 }
+*/

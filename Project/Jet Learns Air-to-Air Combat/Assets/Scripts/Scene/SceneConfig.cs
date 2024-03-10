@@ -56,6 +56,8 @@ public class SceneConfig : ScriptableObject {
 
     public string nameBoxParentObject = "Box";
 
+    public string nameEnemiesChunks = "Enemies Chunks";
+
     public float GetSizePlane() {
         return sizePlane;
     }

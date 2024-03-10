@@ -5,12 +5,19 @@ using UnityEngine;
 
 public static class JetDataUtils {
 
-    public static GameObject GetJetPrefabByTeam(SceneConfig sceneConfig, Team team) {
+    public static GameObject InstantiateJetObject(
+        Team team, Transform jetSpawnTransform, Transform jetParentTransform, SceneConfig sceneConfig
+    ) {
         GameObject jetPrefab = sceneConfig.teamJetGameObject[0];
         if ((int)team < sceneConfig.teamJetGameObject.Count)
             jetPrefab = sceneConfig.teamJetGameObject[(int)team];
 
-        return jetPrefab;
+        return GameObject.Instantiate(
+            jetPrefab,
+            jetSpawnTransform.position,
+            jetSpawnTransform.rotation,
+            jetParentTransform
+        );
     }
 
     public static void SetLowNHighJetObjectActive(GameObject jetObject, SceneConfig sceneConfig) {
@@ -50,6 +57,10 @@ public static class JetDataUtils {
         aircraftController.AddMissilesInArray();
     }
 
+    public static GameObject GetMissileStorageParentObject(GameObject jetObject, SceneConfig sceneConfig) {
+        return jetObject.transform.Find(sceneConfig.nameMissileStorageParentObject).gameObject;
+    }
+
     // Get methods ---------------------------------------------------------
 
     private static GameObject GetModelObject(GameObject jetObject, SceneConfig sceneConfig) {
@@ -68,10 +79,6 @@ public static class JetDataUtils {
         GameObject highResolutionJetModel = modelObject.transform.Find(sceneConfig.highResolutionObjectName).gameObject;
 
         return highResolutionJetModel;
-    }
-
-    private static GameObject GetMissileStorageParentObject(GameObject jetObject, SceneConfig sceneConfig) {
-        return jetObject.transform.Find(sceneConfig.nameMissileStorageParentObject).gameObject;
     }
 
 }

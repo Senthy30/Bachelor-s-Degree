@@ -1,64 +1,52 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
-public class SceneData {
+public class SceneData : MonoBehaviour {
 
-    private List <Transform> thirdPersonViewArray = new List <Transform> ();
+    private static int nextIdScene = 0;
+    private int idScene;
 
-    public void ResetData() {
-        int numTeams = TheaterSettings.GetNumTeams();
+    [SerializeField] private SceneConfig sceneConfig;
+    private SceneBuilder sceneBuilder = null;
+    private SceneController sceneController = null;
+    private SceneComponents sceneComponents = null;
 
-        thirdPersonViewArray.Clear();
-        thirdPersonViewArray = new List<Transform>(new Transform[numTeams]);
+    void Awake() {
+        BuildScene();
     }
 
-    public void AddThirdPersonViewTeam(Team team, Transform transform) {
-        thirdPersonViewArray[((int)team)] = transform;
+    public void BuildScene() {
+        idScene = nextIdScene++;
+        SetResolutionSceneConfig();
+        SceneComponents.SetSceneConfig(sceneConfig);
+
+        sceneBuilder = new SceneBuilder(idScene, gameObject, sceneConfig);
     }
 
-    public Transform GetThirdPersonViewTeam(Team team) {
-        return thirdPersonViewArray[((int)team)];
+    // Setters ------------------------------------------------
+
+    public void SetSceneComponents(SceneComponents sceneComponents) {
+        this.sceneComponents = sceneComponents;
     }
 
-}
-
-[Serializable]
-public struct SceneAircraftsCarrierData {
-    public Vector3[] position;
-    public Quaternion[] rotation;
-
-    public SceneAircraftsCarrierData(int numTeams) {
-        position = new Vector3[numTeams];
-        rotation = new Quaternion[numTeams];
+    public void SetResolutionSceneConfig() {
+        if (sceneConfig.resolution != TheaterData.GetResolution())
+            sceneConfig.resolution = TheaterData.GetResolution();
     }
 
-    public void SetPositionAndRotationByTeam(Team team, Vector3 position, Quaternion rotation) {
-        this.position[(int)team] = position;
-        this.rotation[(int)team] = rotation;
+    public static void SetNextIdScene(int id) {
+        nextIdScene = id;
     }
 
-    public Vector3 GetPositionByTeam(Team team) {
-        return position[(int)team];
+    // Getters ------------------------------------------------
+
+    public SceneComponents GetSceneComponents() {
+        return sceneComponents;
     }
 
-    public Quaternion GetRotationByTeam(Team team) {
-        return rotation[(int)team];
-    }
-}
-
-[Serializable]
-public struct TheaterAircraftsCarrierData {
-    public SceneAircraftsCarrierData[] sceneAircraftsCarrierData;
-
-    public TheaterAircraftsCarrierData(int numScenes, int numTeams) {
-        sceneAircraftsCarrierData = new SceneAircraftsCarrierData[numScenes];
-        for (int i = 0; i < numScenes; i++)
-            sceneAircraftsCarrierData[i] = new SceneAircraftsCarrierData(numTeams);
-    }
-
-    public SceneAircraftsCarrierData GetSceneAircraftsCarrierData(int idScene) {
-        return sceneAircraftsCarrierData[idScene];
+    public SceneConfig GetSceneConfig() {
+        return sceneConfig;
     }
 }

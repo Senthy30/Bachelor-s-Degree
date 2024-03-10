@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2001784484783021235}
-  - component: {fileID: 2001784484783021236}
+  - component: {fileID: 4983526110336346400}
   - component: {fileID: 8314450667395914821}
   m_Layer: 0
   m_Name: Theater
@@ -33,7 +33,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2001784484783021236
+--- !u!114 &4983526110336346400
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,13 +42,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2001784484783021237}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ec2209a9b239d846bb099d1e1955e21, type: 3}
+  m_Script: {fileID: 11500000, guid: 77101bf3b9417064fb8f45bdf568c994, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rebuildScene: 1
-  numScenes: {x: 4, y: 4, z: 4}
-  thirdPersonCinemachine: {fileID: 0}
-  scenePrefab: {fileID: 7692342718047794735, guid: 834fa22584d975d4786af284f61e1983, type: 3}
+  m_rebuildScene: 0
+  m_numScenes: {x: 0, y: 0, z: 0}
+  m_thirdPersonCinemachine: {fileID: 0}
+  m_scenePrefab: {fileID: 7692342718047794735, guid: 834fa22584d975d4786af284f61e1983, type: 3}
 --- !u!114 &8314450667395914821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61,3 +61,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb15a355682927e498754b9c00525367, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  aircraftPhysicsShader: {fileID: 7200000, guid: 6d225d1fbfe04714d9ffc6b8d1f4c0d5, type: 3}
+  aircraftPhysicsArray: []
+  aerodynamicSurfaceConfigs:
+  - {fileID: 11400000, guid: 81d7f621d0fd027439a559113993e656, type: 2}
+  - {fileID: 11400000, guid: 5299ac3def0fab24aab83c2514228424, type: 2}
+  - {fileID: 11400000, guid: 4a6fd563e0686d64d8669ebc2c11e0d4, type: 2}
+  - {fileID: 11400000, guid: 8f9e5dc0e85fe0248b992fdd7ba52f21, type: 2}
+  - {fileID: 11400000, guid: 9b025634fb773e844ab3581b7838960c, type: 2}
+  - {fileID: 11400000, guid: faeec43f929cfcd448fb02149811abff, type: 2}
+  - {fileID: 11400000, guid: 137d7c0a8cf04024e857cc228cb4699c, type: 2}
+  - {fileID: 11400000, guid: 140bbdf3951fe4648b34dc369447f8b4, type: 2}
+  - {fileID: 11400000, guid: 45886f14ecea645489f447d9e67a0ff6, type: 2}
+  - {fileID: 11400000, guid: afc51dc231c0edc45bd44226f26e9b4e, type: 2}

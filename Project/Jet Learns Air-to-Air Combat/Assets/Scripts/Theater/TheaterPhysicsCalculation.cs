@@ -55,13 +55,19 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
     private ForcesShader[] sumForcesShaderPredictionPerAircraft;
 
     private void Start() {
+        // Unity.Collections.LowLevel.Unsafe.UnsafeUtility.SetLeakDetectionMode(Unity.Collections.NativeLeakDetectionMode.EnabledWithStackTrace);
         InitializeShader();
     }
 
     private void FixedUpdate() {
+        float lastTime = Time.realtimeSinceStartup;
+
         InitializeArrays();
 
         CalculateSurfaceInfoShaders(false);
+
+        // Debug.Log("Time: " + ((Time.realtimeSinceStartup - lastTime) * 1000));
+        // lastTime = Time.realtimeSinceStartup;
 
         UpdateFlapAnglesShader();
         UpdateSurfaceInfoShader();
@@ -70,16 +76,7 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
 
         CollectDataGPU(false);
 
-        /*
-        CalculatePrediction();
-        CalculateSurfaceInfoShaders(true);
-
-        UpdateSurfaceInfoShader();
-
-        StartExecutionGPU(); 
-            
-        CollectDataGPU(true);
-        */
+        // Debug.Log("GPU time: " + ((Time.realtimeSinceStartup - lastTime) * 1000));
 
         ApplyForces();
 
@@ -98,7 +95,7 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
         int divideBy = 96;
         int xDisplatches = Mathf.CeilToInt(1f * numAircraftPhysics / divideBy);
 
-        aircraftPhysicsShader.Dispatch(0, xDisplatches, 1, 1);
+        aircraftPhysicsShader.Dispatch(0, xDisplatches, 10, 1);
     }
 
     private void CollectDataGPU(bool usePrediction) {
@@ -261,6 +258,10 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
 
     public void AddAircraftPhysics(AircraftPhysics aircraftPhysics) {
         this.aircraftPhysicsArray.Add(aircraftPhysics);
+    }
+
+    public void ClearAircraftPhysics() {
+        this.aircraftPhysicsArray.Clear();
     }
 
 }
