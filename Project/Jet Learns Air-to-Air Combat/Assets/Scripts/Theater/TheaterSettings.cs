@@ -9,10 +9,8 @@ public class TheaterSettings : MonoBehaviour {
     private const string PATH_SAVED_POSITION_ROTATION = "Assets/Data/Aircraft Carrier/theater_data.json";
 
     public static Resolution resolution;
-
     private static TheaterAircraftsCarrierData theaterAircraftsCarrierData;
-
-    private Vector3 offsetScenes = new Vector3(1f, 5f, 1f);
+    private static Vector3 offsetScenes = new Vector3(1f, 5f, 1f);
 
     [SerializeField]
     private bool rebuildScene = false;
@@ -35,9 +33,11 @@ public class TheaterSettings : MonoBehaviour {
 
     [SerializeField]
     private GameObject scenePrefab;
+    private TheaterPhysicsCalculation theaterPhysicsCalculation;
 
     private List<GameObject> sceneArray = new List<GameObject>();
 
+    /*
     private void Awake() {
         BuildTheater();
     }
@@ -50,7 +50,8 @@ public class TheaterSettings : MonoBehaviour {
         DestroyPreviousScenes();
         SetDefaultSettings();
 
-        SceneConfig sceneConfig = scenePrefab.GetComponent<SceneSettings>().GetSceneConfig();
+        theaterPhysicsCalculation = gameObject.GetComponent<TheaterPhysicsCalculation>();
+        SceneConfig sceneConfig = scenePrefab.GetComponent<SceneData>().GetSceneConfig();
         Vector3 sizeTheater = new Vector3(
             numScenes.x * (sceneConfig.sceneSize.x + offsetScenes.x),
             numScenes.y * (sceneConfig.sceneSize.y + offsetScenes.y),
@@ -81,26 +82,26 @@ public class TheaterSettings : MonoBehaviour {
     }
 
     private void BuildScene(Vector3 position, bool editorMode) {
-        GameObject scene = Instantiate(
-            scenePrefab,
-            position,
-            Quaternion.Euler(Vector3.zero),
-            transform
-        );
+        GameObject scene = Instantiate(scenePrefab, position, Quaternion.Euler(Vector3.zero), transform);
         scene.name = "Scene " + currentSceneToBuild;
 
-        gameObject.GetComponent<TheaterPhysicsCalculation>().SetAircraftPhysics(
-            scene.GetComponent<SceneSettings>().GetInstancedJetGameObject(Team.BLUE).GetComponent<AircraftPhysics>()
-        );
+        SceneData sceneData = scene.GetComponent<SceneData>();
+        SceneComponents sceneComponents = sceneData.GetSceneComponents();
+        List <GameObject> instancesJetData = sceneComponents.GetJetData().ConvertAll(jetData => jetData.GetObject());
+
+        foreach (GameObject jet in instancesJetData) {
+            theaterPhysicsCalculation.AddAircraftPhysics(jet.GetComponent<AircraftPhysics>());
+        }
 
         if (editorMode) {
-            scene.GetComponent<SceneSettings>().BuildScene();
+            sceneData.BuildScene();
 
             if (s_rebuildScene) {
-                SceneSettings sceneSettings = scene.GetComponent<SceneSettings>();
-
                 foreach (Team team in System.Enum.GetValues(typeof(Team))) {
-                    Tuple<Vector3, Quaternion> transformValues = sceneSettings.GetAircraftCarrierPositionAndRotationByTeam(team);
+                    AircraftCarrierData aircraftCarrierData = sceneComponents.GetAircraftCarrierData(team);
+                    Vector3 positionAircraftCarrier = aircraftCarrierData.GetPosition();
+                    Quaternion rotationAircraftCarrier = aircraftCarrierData.GetRotation();
+
                     theaterAircraftsCarrierData.GetSceneAircraftsCarrierData(currentSceneToBuild).SetPositionAndRotationByTeam(team, transformValues.Item1, transformValues.Item2);
                     theaterAircraftsCarrierData.GetSceneAircraftsCarrierData(currentSceneToBuild).SetPositionAndRotationByTeam(team, transformValues.Item1, transformValues.Item2);
                 }
@@ -216,6 +217,7 @@ public class TheaterSettings : MonoBehaviour {
     public static Quaternion GetSavedAircraftRotationByTeam(int idScene, Team team) {
         return theaterAircraftsCarrierData.GetSceneAircraftsCarrierData(idScene).GetRotationByTeam(team);
     }
+    */
 }
 
 public enum Resolution { LOW_RESOLUTION, HIGH_RESOLUTION };

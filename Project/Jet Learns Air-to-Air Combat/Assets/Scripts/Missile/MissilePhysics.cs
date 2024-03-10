@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [SerializeField]
-public struct HeatEmission {
+public class HeatEmission {
     public Transform transform;
     public int heat;
 
@@ -14,10 +14,11 @@ public struct HeatEmission {
 
 public class MissilePhysics : MonoBehaviour {
 
-    static List<HeatEmission> heatEmissionArray = new List<HeatEmission>();
+    // static List<HeatEmission> heatEmissionArray = new List<HeatEmission>();
 
     private bool missileLaunched = false;
     private Rigidbody rigidbody;
+    private List<HeatEmission> heatEmissionArray;
 
     [SerializeField]
     private float lifeTime = 25f;
@@ -183,7 +184,7 @@ public class MissilePhysics : MonoBehaviour {
         smokeGameObject.SetActive(true);
     }
 
-    public static void SetHeatEmissionArray(List<HeatEmission> heatEmissionsArray) {
+    public void SetHeatEmissionArray(List<HeatEmission> heatEmissionsArray) {
         heatEmissionArray = heatEmissionsArray;
     }
 

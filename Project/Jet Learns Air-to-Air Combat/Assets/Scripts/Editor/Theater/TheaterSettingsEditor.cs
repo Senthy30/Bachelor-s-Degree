@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+/*
 [CustomEditor(typeof(TheaterSettings))]
 public class TheaterSettingsEditor : Editor {
 
@@ -17,3 +18,4 @@ public class TheaterSettingsEditor : Editor {
     }
 
 }
+*/

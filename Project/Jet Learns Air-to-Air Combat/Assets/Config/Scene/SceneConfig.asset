@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cb3d06724525cf49ac48d21d7f6f6cb, type: 3}
   m_Name: SceneConfig
   m_EditorClassIdentifier: 
-  resolution: 0
-  sceneSize: {x: 500, y: 150, z: 500}
+  resolution: 1
+  sceneSize: {x: 500, y: 100, z: 500}
   margin: 1000
-  yAircraftCarrier: -20.5
+  yAircraftCarrier: -18.5
   scenePrefab: {fileID: 0}
   boxParentObject: {fileID: 1867185262805341161, guid: 28b7d9c30e1d01545a3111a740598176, type: 3}
   showChunksEnemies: 0
@@ -24,9 +24,12 @@ MonoBehaviour:
   chunkMaterial: {fileID: 2100000, guid: 6c64515b77992c74bae308f8c00c6103, type: 2}
   aircraftCarrierGameObject: {fileID: 1572100352888701432, guid: 6c77e38bd3879164d891447dd7c3e89d, type: 3}
   teamJetGameObject:
+  - {fileID: 7549113172836069914, guid: 48748bfafcfef814e9da00b84b3bb816, type: 3}
   - {fileID: 7549113172836069914, guid: 56e1decd0a3618f4d832d4fd572f4876, type: 3}
-  - {fileID: 7549113172836069914, guid: 56e1decd0a3618f4d832d4fd572f4876, type: 3}
-  waterNumChunks: {x: 1, y: 1}
+  teamJetTexture:
+  - {fileID: 2800000, guid: f3691e982dfab1843a12c74ce99a282e, type: 3}
+  - {fileID: 2800000, guid: 7020f283c8037c14bae769a2dc171b60, type: 3}
+  waterNumChunks: {x: 4, y: 4}
   waterMaterial: {fileID: 2100000, guid: a652350cee76fe44d8cffe9f6c18c6ff, type: 2}
   waterMaterialLowResolution: {fileID: 2100000, guid: 6dd04445a2ea1804a98239ab8a675c24, type: 2}
   modelObjectName: Model
@@ -38,4 +41,6 @@ MonoBehaviour:
   nameWaterParentObject: Water
   nameAircraftCarrierParentObject: Aircraft Carrier
   nameMissileParentObject: Missiles
+  nameMissileStorageParentObject: Missile Storage
   nameBoxParentObject: Box
+  nameEnemiesChunks: Enemies Chunks
