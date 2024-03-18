@@ -48,12 +48,13 @@ public static class JetDataUtils {
         }
     }
 
-    public static void SetSceneDataForJet(GameObject jetObject, SceneConfig sceneConfig, GameObject sceneObject) {
+    public static void SetSceneDataForJet(Team team, GameObject jetObject, SceneConfig sceneConfig, GameObject sceneObject) {
         GameObject missileParentObject = GetMissileStorageParentObject(jetObject, sceneConfig);
         AircraftController aircraftController = jetObject.GetComponent<AircraftController>();
 
+        aircraftController.SetTeam(team);
         aircraftController.SetSceneMissileParentObject(missileParentObject.transform);
-        aircraftController.SetSceneObject(sceneObject);
+        aircraftController.SetSceneObject(sceneObject.GetComponent<SceneData>());
         aircraftController.AddMissilesInArray();
     }
 

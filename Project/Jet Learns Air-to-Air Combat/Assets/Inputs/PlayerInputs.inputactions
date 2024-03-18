@@ -103,6 +103,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Decoy",
+                    "type": "Button",
+                    "id": "f75b646e-2904-4364-9cd5-13b2f3ddca84",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -224,6 +233,85 @@
                     "processors": "",
                     "groups": "",
                     "action": "Fire",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "60402267-940b-4ff0-968b-5a5de81930b4",
+                    "path": "<Mouse>/middleButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Decoy",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Theater",
+            "id": "a106fe08-00c9-438f-b661-d58f96a3fc44",
+            "actions": [
+                {
+                    "name": "Change View Mode",
+                    "type": "Button",
+                    "id": "63db75c8-eb93-416f-8f50-94e4601c675e",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Change Scene Watching",
+                    "type": "Button",
+                    "id": "2fdfb0b3-c6cb-4c7b-bf25-000c88384196",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Change Team Watching",
+                    "type": "Button",
+                    "id": "8808c33f-49e4-4fc2-ba26-a103b884aa6d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "7e95c9a9-8650-424e-9d01-2047edf051ba",
+                    "path": "<Keyboard>/v",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Change View Mode",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "025ba06d-32d4-44b2-95a4-85dd88263bc2",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Change Scene Watching",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b73f61e5-0d86-4a33-8ba5-543fa171134d",
+                    "path": "<Keyboard>/t",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Change Team Watching",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

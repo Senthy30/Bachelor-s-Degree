@@ -16,6 +16,7 @@ public class SceneBuilder {
     private Transform m_aircraftCarrierParentTransform;
     private Transform m_jetsParentTransform;
     private Transform m_missileParentTransform;
+    private Transform m_decoyParentTransform;
 
     // built data
 
@@ -47,10 +48,10 @@ public class SceneBuilder {
             AircraftCarrierData aircraftCarrierData = BuildAircraftCarrier(team);
             JetData jetData = BuildJet(team, aircraftCarrierData.GetTransformJetSpawnPoint());
 
+            jetData.SetNumDecoys(m_sceneConfig.numDecoysPerJet);
             m_sceneComponents.AddJetData(jetData);
             m_sceneComponents.AddAircraftCarrierData(aircraftCarrierData);
             m_sceneComponents.AddHeatEmission(new HeatEmission(jetData.GetObject().transform, 1));
-            m_sceneComponents.AddThirdPersonView(team);
         }
 
         m_sceneComponents.SetEnemyChunksData(BuildEnemyChunks());
@@ -84,12 +85,23 @@ public class SceneBuilder {
         return new EnemyChunksData(m_sceneObject);
     }
 
+    public DecoyData BuildDecoy(Vector3 position) {
+        DecoyData decoyData = new DecoyData(m_sceneConfig.decoyPrefab, m_decoyParentTransform, position, m_sceneData);
+        HeatEmission heatEmission = new HeatEmission(decoyData.GetObject().transform, 2);
+
+        m_sceneComponents.AddHeatEmission(heatEmission);
+        decoyData.SetHeatEmission(heatEmission);
+
+        return decoyData;
+    }
+
     private void FindParentsObjects() {
         Transform transform = m_sceneObject.transform;
 
         m_jetsParentTransform = transform.Find(m_sceneConfig.nameJetParentObject).transform;
         m_aircraftCarrierParentTransform = transform.Find(m_sceneConfig.nameAircraftCarrierParentObject).transform;
         m_missileParentTransform = transform.Find(m_sceneConfig.nameMissileParentObject).transform;
+        m_decoyParentTransform = transform.Find(m_sceneConfig.nameDecoyParentObject).transform;
         m_waterParentTransform = transform.Find(m_sceneConfig.nameWaterParentObject).transform;
         m_boxParentTransform = transform.Find(m_sceneConfig.nameBoxParentObject).transform;
     }

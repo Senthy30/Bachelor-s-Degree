@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UIElements;
 
 public class AircraftPhysics : MonoBehaviour {
 
@@ -12,7 +14,8 @@ public class AircraftPhysics : MonoBehaviour {
     [SerializeField]
     private Vector3 localGForce;
 
-    private Rigidbody rigidbody;
+    private Rigidbody m_rigidbody;
+    private event Action<Collision> m_onCollision;
 
     [SerializeField]
     private float thrust;
@@ -26,9 +29,17 @@ public class AircraftPhysics : MonoBehaviour {
 
     [SerializeField]
     private List<AerodynamicSurfacePhysics> aerodynamicSurfaces = null;
+    
+    private bool aerodynamicSurfacesValuesUpdated = false;
+    private Vector3 position;
+    private Vector3 localScale;
+    private Vector3 velocity;
+    private Vector3 angularVelocity;
+    private Vector3 worldCenterOfMass;
+    private Quaternion rotation;
 
     private void Awake() {
-        rigidbody = GetComponent<Rigidbody>();
+        m_rigidbody = GetComponent<Rigidbody>();
     }
 
     public void SetThrustPercent(float percent) {
@@ -52,42 +63,42 @@ public class AircraftPhysics : MonoBehaviour {
         return;
 
         Tuple<Vector3, Vector3> forceTorqueApplied = CalculateAerodynamicForces(
-            rigidbody.velocity,
-            rigidbody.angularVelocity,
+            m_rigidbody.velocity,
+            m_rigidbody.angularVelocity,
             Vector3.zero,
-            rigidbody.worldCenterOfMass,
+            m_rigidbody.worldCenterOfMass,
             1.2f
         );
 
         forceApplied = forceTorqueApplied.Item1;
         torqueApplied = forceTorqueApplied.Item2;
 
-        rigidbody.AddForce(forceApplied);
-        rigidbody.AddTorque(torqueApplied);
-        rigidbody.AddForce(transform.forward * thrust * thrustPercent);
+        GetComponent<Rigidbody>().AddForce(forceApplied);
+        GetComponent<Rigidbody>().AddTorque(torqueApplied);
+        GetComponent<Rigidbody>().AddForce(transform.forward * thrust * thrustPercent);
 
         return;
 
         // calculate velocity prediction
-        Vector3 force = forceTorqueApplied.Item1 + transform.forward * thrust * thrustPercent + Physics.gravity * rigidbody.mass;
-        Vector3 velocityPrediction = rigidbody.velocity + Time.fixedDeltaTime * PREDICTION_FRACTION * force / rigidbody.mass;
+        Vector3 force = forceTorqueApplied.Item1 + transform.forward * thrust * thrustPercent + Physics.gravity * GetComponent<Rigidbody>().mass;
+        Vector3 velocityPrediction = GetComponent<Rigidbody>().velocity + Time.fixedDeltaTime * PREDICTION_FRACTION * force / GetComponent<Rigidbody>().mass;
 
         // calculate angular velocity prediction
-        Quaternion inertiaTensorWorldRotation = rigidbody.rotation * rigidbody.inertiaTensorRotation;
+        Quaternion inertiaTensorWorldRotation = GetComponent<Rigidbody>().rotation * GetComponent<Rigidbody>().inertiaTensorRotation;
         Vector3 torqueChange = Quaternion.Inverse(inertiaTensorWorldRotation) * forceTorqueApplied.Item2;
         Vector3 angularVelocityChange = new Vector3(
-            torqueChange.x / rigidbody.inertiaTensor.x,
-            torqueChange.y / rigidbody.inertiaTensor.y,
-            torqueChange.z / rigidbody.inertiaTensor.z
+            torqueChange.x / GetComponent<Rigidbody>().inertiaTensor.x,
+            torqueChange.y / GetComponent<Rigidbody>().inertiaTensor.y,
+            torqueChange.z / GetComponent<Rigidbody>().inertiaTensor.z
         );
-        Vector3 angularVelocityPrediction = rigidbody.angularVelocity + Time.fixedDeltaTime * PREDICTION_FRACTION * (inertiaTensorWorldRotation * angularVelocityChange);
+        Vector3 angularVelocityPrediction = GetComponent<Rigidbody>().angularVelocity + Time.fixedDeltaTime * PREDICTION_FRACTION * (inertiaTensorWorldRotation * angularVelocityChange);
 
         // calculate force and torque prediction applied
         Tuple<Vector3, Vector3> forceTorquePredictionApplied = CalculateAerodynamicForces(
             velocityPrediction,
             angularVelocityPrediction,
             Vector3.zero,
-            rigidbody.worldCenterOfMass,
+            GetComponent<Rigidbody>().worldCenterOfMass,
             1.2f
         );
 
@@ -98,15 +109,15 @@ public class AircraftPhysics : MonoBehaviour {
         forceApplied = (forceTorqueApplied.Item1 + forceTorquePredictionApplied.Item1) / 2f;
         torqueApplied = (forceTorqueApplied.Item2 + forceTorquePredictionApplied.Item2) / 2f;
 
-        rigidbody.AddForce(forceApplied);
-        rigidbody.AddTorque(torqueApplied);
-        rigidbody.AddForce(transform.forward * thrust * thrustPercent);
+        GetComponent<Rigidbody>().AddForce(forceApplied);
+        GetComponent<Rigidbody>().AddTorque(torqueApplied);
+        GetComponent<Rigidbody>().AddForce(transform.forward * thrust * thrustPercent);
     }
 
-    public void ApplyForces(Vector3 forceApplied, Vector3 torqueApplied) {
-        rigidbody.AddForce(forceApplied);
-        rigidbody.AddTorque(torqueApplied);
-        rigidbody.AddForce(transform.forward * thrust * thrustPercent);
+    public void ApplyForces(ref Vector3 forceApplied, ref Vector3 torqueApplied) {
+        GetComponent<Rigidbody>().AddForce(forceApplied);
+        GetComponent<Rigidbody>().AddTorque(torqueApplied);
+        GetComponent<Rigidbody>().AddForce(transform.forward * thrust * thrustPercent);
     }
 
     private Tuple <Vector3, Vector3> CalculateAerodynamicForces (Vector3 velocity, Vector3 angularVelocity, Vector3 wind, Vector3 centerOfMass, float airDensity) {
@@ -132,8 +143,31 @@ public class AircraftPhysics : MonoBehaviour {
         return new Tuple<Vector3, Vector3>(forceApplied, torqueApplied);
     }
 
-    private void CalculateGForce() {
-        localGForce = Vector3.Cross(rigidbody.angularVelocity, rigidbody.velocity);
+    public void UpdateValuesForPhysics() {
+        position = transform.position;
+        rotation = transform.rotation;
+        localScale = transform.localScale;
+
+        velocity = m_rigidbody.velocity;
+        angularVelocity = m_rigidbody.angularVelocity;
+        worldCenterOfMass = m_rigidbody.worldCenterOfMass;
+
+        if (!aerodynamicSurfacesValuesUpdated) {
+            aerodynamicSurfacesValuesUpdated = true;
+            for (int i = 0; i < aerodynamicSurfaces.Count; i++) {
+                aerodynamicSurfaces[i].UpdateValuesForPhysics(transform);
+            }
+        }
+    }
+
+    public void AddFuncInOnCollision(System.Action<Collision> func) {
+        m_onCollision += func;
+    }
+
+    private void OnCollisionEnter(Collision collision) {
+        if (collision == null) return;
+
+        m_onCollision?.Invoke(collision);
     }
 
 #if UNITY_EDITOR
@@ -147,11 +181,11 @@ public class AircraftPhysics : MonoBehaviour {
             return;
         }
 
-        if (rigidbody == null) {
+        if (GetComponent<Rigidbody>() == null) {
             com = GetComponent<Rigidbody>().worldCenterOfMass;
             forceAndTorque = CalculateAerodynamicForces(-displayAirVelocity, Vector3.zero, Vector3.zero, com, displayAirDensity);
         } else {
-            com = rigidbody.worldCenterOfMass;
+            com = GetComponent<Rigidbody>().worldCenterOfMass;
             forceAndTorque = new Tuple<Vector3, Vector3>(forceApplied, torqueApplied);
         }
 
@@ -159,4 +193,28 @@ public class AircraftPhysics : MonoBehaviour {
         center = com + Vector3.Cross(forceAndTorque.Item1, forceAndTorque.Item2) / forceAndTorque.Item1.sqrMagnitude;
     }
 #endif
+
+    public ref Vector3 GetPosition() {
+        return ref position;
+    }
+
+    public ref Vector3 GetLocalScale() {
+        return ref localScale;
+    }
+
+    public ref Vector3 GetVelocity() {
+        return ref velocity;
+    }
+
+    public ref Vector3 GetAngularVelocity() {
+        return ref angularVelocity;
+    }
+
+    public ref Vector3 GetWorldCenterOfMass() {
+        return ref worldCenterOfMass;
+    }
+
+    public ref Quaternion GetRotation() {
+        return ref rotation;
+    }
 }

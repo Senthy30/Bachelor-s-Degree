@@ -32,15 +32,24 @@ MonoBehaviour:
   waterNumChunks: {x: 4, y: 4}
   waterMaterial: {fileID: 2100000, guid: a652350cee76fe44d8cffe9f6c18c6ff, type: 2}
   waterMaterialLowResolution: {fileID: 2100000, guid: 6dd04445a2ea1804a98239ab8a675c24, type: 2}
+  numDecoysPerJet: 20
+  decoyPrefab: {fileID: 3504330353129792191, guid: fb396786870914e478a54526bf7ad867, type: 3}
   modelObjectName: Model
   lowResolutionObjectName: Low Resolution
   highResolutionObjectName: High Resolution
+  collisionParentObjectName: Collision
+  firstPersonViewName: First Person View
   thirdPersonViewName: Third Person View
+  decoySpawnPointName: Decoy Spawn Point
   nameJetSpawnPointObject: Jet Spawn Point
   nameJetParentObject: Jets
   nameWaterParentObject: Water
   nameAircraftCarrierParentObject: Aircraft Carrier
   nameMissileParentObject: Missiles
   nameMissileStorageParentObject: Missile Storage
+  nameDecoyParentObject: Decoys
   nameBoxParentObject: Box
   nameEnemiesChunks: Enemies Chunks
+  WHEEL_LAYER_NAME: Wheel
+  AIRCRAFT_RUNWAY_LAYER_NAME: AircraftRunway
+  DECOY_LAYER_NAME: Decoy

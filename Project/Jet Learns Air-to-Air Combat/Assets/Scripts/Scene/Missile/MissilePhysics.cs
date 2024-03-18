@@ -108,6 +108,9 @@ public class MissilePhysics : MonoBehaviour {
         targetHeat = -1;
         target = null;
         foreach (HeatEmission heatEmission in heatEmissionArray) {
+            if (heatEmission.transform == null)
+                continue;
+
             float angleToTarget = GetAngleToHeatEmission(heatEmission.transform.position);
             if (angleToTarget <= maxAngleToDetect && heatEmission.heat > targetHeat) {
                 targetHeat = heatEmission.heat;
@@ -188,9 +191,16 @@ public class MissilePhysics : MonoBehaviour {
         heatEmissionArray = heatEmissionsArray;
     }
 
-    private void OnCollisionEnter(Collision collision) {
-        
+    public void TriggerFindTarget() {
+        currentTimeWaitedToFindTarget = -1;
+        FindTarget();
+    }
 
+    public bool GetMissileLaunched() {
+        return missileLaunched;
+    }
+
+    private void OnCollisionEnter(Collision collision) {
         Destroy(gameObject);
     }
 

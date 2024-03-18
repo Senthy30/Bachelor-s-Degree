@@ -71,8 +71,9 @@ public class TheaterBuilder {
 
         SceneComponents sceneComponents = sceneData.GetSceneComponents();
         List<GameObject> instancesJetData = sceneComponents.GetJetData().ConvertAll(jetData => jetData.GetObject());
-        foreach (GameObject jet in instancesJetData) {
-            m_theaterPhysicsCalculation.AddAircraftPhysics(jet.GetComponent<AircraftPhysics>());
+        for (int index = 0; index < instancesJetData.Count; index++) {
+            int indexForPhysicsCalculationArray = m_theaterPhysicsCalculation.AddAircraftPhysics(instancesJetData[index].GetComponent<AircraftPhysics>());
+            sceneComponents.GetJetData(index).SetPhysicsCalculationArrayIndex(indexForPhysicsCalculationArray);
         }
 
         m_theaterComponents.AddScene(sceneData);

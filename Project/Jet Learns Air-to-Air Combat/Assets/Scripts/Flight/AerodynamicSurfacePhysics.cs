@@ -17,10 +17,27 @@ public class AerodynamicSurfacePhysics : MonoBehaviour {
     public float InputMultiplier = 1;
     public ControlInputType InputType;
 
+    public Vector3 relativePosition;
+    public Quaternion realRelRot;
+    public Quaternion relativeRotation;
+
     private float flapAngle;
 
     public void SetFlapAngle(float angle) {
         flapAngle = Mathf.Clamp(angle, -Mathf.Deg2Rad * maxFlapAngle, Mathf.Deg2Rad * maxFlapAngle);
+    }
+
+    public void UpdateValuesForPhysics(Transform aircraftTransform) {
+        relativePosition = aircraftTransform.InverseTransformPoint(transform.position);
+        relativeRotation = Quaternion.Inverse(aircraftTransform.rotation) * transform.rotation;
+    }
+
+    public Vector3 GetWorldPosition(ref Vector3 aircraftPosition, ref Vector3 localScale, ref Quaternion rotation) {
+        return rotation * Vector3.Scale(relativePosition, localScale) + aircraftPosition;
+    }
+
+    public Quaternion GetWorldRotation(ref Quaternion aircraftRotation) {
+        return aircraftRotation * relativeRotation;
     }
 
     public Tuple<Vector3, Vector3> CalculateForces(Vector3 airVelocity, float airDensity, Vector3 relativePosition) {

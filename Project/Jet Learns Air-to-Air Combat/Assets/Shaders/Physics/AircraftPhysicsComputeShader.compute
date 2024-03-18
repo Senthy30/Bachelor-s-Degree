@@ -71,6 +71,7 @@ float4 _rotation;
 
 AerodynamicSurfaceConfig _surfaceConfig;
 
+RWStructuredBuffer<int> _skipAircraftArray;
 RWStructuredBuffer<float> _flapAngleArray;
 RWStructuredBuffer<AerodynamicSurfaceConfig> _surfaceConfigArray;
 RWStructuredBuffer<SurfaceInfo> _surfaceInfoArray;
@@ -186,11 +187,18 @@ float3 CalculateAerodynamicCoefficients(float angleOfAttack, float coefLiftCurve
 }
 
 // 6 10 8
-[numthreads(96, 10, 1)]
+[numthreads(120, 1, 1)]
 void CSMain (uint3 id : SV_DispatchThreadID) {     
-    _currentSurface = id.x * _numSurfaces + id.y;
-    _currentSurfaceZ = id.y;
+    int yValue = id.y;
+    _currentSurface = id.x * _numSurfaces + yValue;
+    _currentSurfaceZ = yValue;
     _surfaceConfig = _surfaceConfigArray[_currentSurfaceZ];
+    
+    if (_skipAircraftArray[id.x] != 0) {
+        _forcesArray[_currentSurface].force = float3(0, 0, 0);
+        _forcesArray[_currentSurface].torque = float3(0, 0, 0);
+        return;
+    }
     
     _flapAngle = _flapAngleArray[_currentSurface];
     _airVelocity = _surfaceInfoArray[_currentSurface].airVelocity;

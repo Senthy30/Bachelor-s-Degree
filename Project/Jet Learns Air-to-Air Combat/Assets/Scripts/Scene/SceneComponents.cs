@@ -4,21 +4,18 @@ using UnityEngine;
 
 public class SceneComponents {
 
-    private List<AircraftCarrierData> m_instancesAircraftCarrierData = new List<AircraftCarrierData>();
-    private List<JetData> m_instancesJetData = new List<JetData>();
-    private List<HeatEmission> m_instancesHeatEmission = new List<HeatEmission>();
-    private List<Transform> m_thirdPersonViews = new List<Transform>();
+    private SceneConfig m_sceneConfig;
 
     private BoxData m_boxData;
     private WaterData m_waterData;
     private EnemyChunksData m_enemyChunksData;
-    private SceneConfig m_sceneConfig;
+
+    private List<AircraftCarrierData> m_instancesAircraftCarrierData = new List<AircraftCarrierData>();
+    private List<JetData> m_instancesJetData = new List<JetData>();
+    private List<HeatEmission> m_instancesHeatEmission = new List<HeatEmission>();
 
     public SceneComponents(SceneConfig sceneConfig) {
         m_sceneConfig = sceneConfig;
-
-        int numTeams = TheaterData.GetNumTeams();
-        m_thirdPersonViews = new List<Transform>(new Transform[numTeams]);
     }
 
     // Add methods --------------------------------------------
@@ -33,11 +30,6 @@ public class SceneComponents {
 
     public void AddHeatEmission(HeatEmission heatEmission) {
         m_instancesHeatEmission.Add(heatEmission);
-    }
-
-    public void AddThirdPersonView(Team team) {
-        Transform transform = GetJetData(team).GetObject().transform.Find(m_sceneConfig.thirdPersonViewName);
-        m_thirdPersonViews[((int)team)] = transform;
     }
 
     // Setters ------------------------------------------------
@@ -101,8 +93,27 @@ public class SceneComponents {
 
     // ThirdPersonView -----------------------------------------
 
+    public Transform GetFirstPersonViewTeam(Team team) {
+        return GetJetData(team).GetFirstPersonViewTransform();
+    }
+
     public Transform GetThirdPersonViewTeam(Team team) {
-        return m_thirdPersonViews[((int)team)];
+        return GetJetData(team).GetThirdPersonViewTransform();
+    }
+
+    // MissilePhysics ------------------------------------------
+
+    public void TriggerMissilesFindTarget() {
+        for (int i = 0; i < m_instancesJetData.Count; i++) {
+            if (m_instancesJetData[i] != null && m_instancesJetData[i].GetObject() != null)
+                m_instancesJetData[i].TriggerMissilesFindTarget();
+        }
+    }
+
+    // Remove methods -----------------------------------------
+
+    public void RemoveHeatEmission(HeatEmission heatEmission) {
+        m_instancesHeatEmission.Remove(heatEmission);
     }
 
     // Clear --------------------------------------------------
@@ -111,16 +122,17 @@ public class SceneComponents {
         m_instancesAircraftCarrierData.Clear();
         m_instancesJetData.Clear();
         m_instancesHeatEmission.Clear();
-        m_thirdPersonViews.Clear();
     }
 
     // Static methods ------------------------------------------
     
     public static void SetSceneConfig(SceneConfig sceneConfig) {
         JetData.SetSceneConfig(sceneConfig);
+        JetCollision.SetSceneConfig(sceneConfig);
         AircraftCarrierData.SetSceneConfig(sceneConfig);
         BoxData.SetSceneConfig(sceneConfig);
         WaterData.SetSceneConfig(sceneConfig);
         EnemyChunksData.SetSceneConfig(sceneConfig);
+        DecoyPhysics.SetSceneConfig(sceneConfig);
     }
 }

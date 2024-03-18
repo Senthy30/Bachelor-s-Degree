@@ -10,7 +10,6 @@ public class SceneData : MonoBehaviour {
 
     [SerializeField] private SceneConfig sceneConfig;
     private SceneBuilder sceneBuilder = null;
-    private SceneController sceneController = null;
     private SceneComponents sceneComponents = null;
 
     void Awake() {
@@ -23,6 +22,27 @@ public class SceneData : MonoBehaviour {
         SceneComponents.SetSceneConfig(sceneConfig);
 
         sceneBuilder = new SceneBuilder(idScene, gameObject, sceneConfig);
+    }
+
+    public void DropDecoy(Team team) {
+        JetData jetData = sceneComponents.GetJetData(team);
+
+        if (jetData.GetNumDecoys() > 0) {
+            jetData.DecrementNumDecoys();
+
+            DecoyData decoyObject = sceneBuilder.BuildDecoy(jetData.GetDecoySpawnPointTransform().position);
+            DecoyPhysics decoyPhysics = decoyObject.GetObject().GetComponent<DecoyPhysics>();
+
+            decoyPhysics.AddJetCollision(jetData.GetColliderParentObject());
+            decoyPhysics.SetVelocity(jetData.GetObject().GetComponent<Rigidbody>().velocity);
+            decoyPhysics.SetCollisionsIgnoreAdded();
+
+            sceneComponents.TriggerMissilesFindTarget();
+        }
+    }
+
+    public void DestroyDecoy(DecoyData decoyData) {
+        sceneComponents.RemoveHeatEmission(decoyData.GetHeatEmission());
     }
 
     // Setters ------------------------------------------------

@@ -39,14 +39,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _Distance: 250
-    - _Fill: 0.02
+    - _Fill: 0.025
     - _FresnelPower: 5.39
     - _Offset: 1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _RoundedSpeed: 5
     - _ScrollSpeed: 0.2
-    - _Thickness: 0.1
+    - _Thickness: 0.44
     m_Colors:
     - _Emission: {r: 0, g: 4.408222, b: 5.6508083, a: 0}
     - _Rounded: {r: 0.94, g: 0.4, b: 0, a: 0}
