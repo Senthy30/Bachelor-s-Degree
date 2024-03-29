@@ -14,6 +14,7 @@ public class AircraftPhysics : MonoBehaviour {
     [SerializeField]
     private Vector3 localGForce;
 
+    private bool m_skipApplyForces = false;
     private Rigidbody m_rigidbody;
     private event Action<Collision> m_onCollision;
 
@@ -40,10 +41,29 @@ public class AircraftPhysics : MonoBehaviour {
 
     private void Awake() {
         m_rigidbody = GetComponent<Rigidbody>();
+        m_skipApplyForces = false;
+    }
+
+    public void SkipApplyForcesFor(float timeToSkip) {
+        if (timeToSkip < 0)
+            return;
+
+        m_skipApplyForces = true;
+        StartCoroutine(CallSkipApplyForcesFor(timeToSkip));
+    }
+
+    IEnumerator CallSkipApplyForcesFor(float delay) {
+        yield return new WaitForSeconds(delay);
+
+        m_skipApplyForces = false;
     }
 
     public void SetThrustPercent(float percent) {
         thrustPercent = percent;
+    }
+
+    public bool GetSkipApplyForces() {
+        return m_skipApplyForces;
     }
 
     public float GetThrustPercent() {

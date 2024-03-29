@@ -33,29 +33,69 @@ public static class JetDataUtils {
     }
 
     public static void SetLowNHighMissileStorageActive(GameObject jetObject, SceneConfig sceneConfig) {
-        GameObject missileStorageParent = GetMissileStorageParentObject(jetObject, sceneConfig);
-        int countChilds = missileStorageParent.transform.childCount;
+        Transform missileStorageParentTransform = GetMissileStorageParentObject(jetObject, sceneConfig).transform;
+        int countChilds = missileStorageParentTransform.childCount;
 
         for (int child = 0; child < countChilds; child++) {
-            GameObject missile = missileStorageParent.transform.GetChild(child).gameObject;
+            Transform missileParentTransform = missileStorageParentTransform.GetChild(child);
 
-            missile.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(
-                (sceneConfig.resolution == Resolution.LOW_RESOLUTION) ? true : false
-            );
-            missile.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(
-                (sceneConfig.resolution == Resolution.HIGH_RESOLUTION) ? true : false
-            );
+            for (int i = 0; i < missileParentTransform.childCount; i++) {
+                GameObject missile = missileParentTransform.GetChild(i).gameObject;
+
+                missile.transform.Find(sceneConfig.lowResolutionObjectName).gameObject.SetActive(
+                    (sceneConfig.resolution == Resolution.LOW_RESOLUTION) ? true : false
+                );
+                missile.transform.Find(sceneConfig.highResolutionObjectName).gameObject.SetActive(
+                    (sceneConfig.resolution == Resolution.HIGH_RESOLUTION) ? true : false
+                );
+            }
         }
     }
 
-    public static void SetSceneDataForJet(Team team, GameObject jetObject, SceneConfig sceneConfig, GameObject sceneObject) {
+    public static void SetSceneDataForJet(Team team, JetData jetData, GameObject jetObject, SceneConfig sceneConfig, GameObject sceneObject) {
         GameObject missileParentObject = GetMissileStorageParentObject(jetObject, sceneConfig);
         AircraftController aircraftController = jetObject.GetComponent<AircraftController>();
 
         aircraftController.SetTeam(team);
+        aircraftController.SetJetData(jetData);
         aircraftController.SetSceneMissileParentObject(missileParentObject.transform);
         aircraftController.SetSceneObject(sceneObject.GetComponent<SceneData>());
         aircraftController.AddMissilesInArray();
+    }
+
+    public static void AddMissilesDataInArray(GameObject jetObject, SceneConfig sceneConfig, List<MissileData> missilesData) {
+        Transform missileStorageParentTransform = GetMissileStorageParentObject(jetObject, sceneConfig).transform;
+        int countChilds = missileStorageParentTransform.childCount;
+
+        for (int child = 0; child < countChilds; child++) {
+            Transform missileParentTransform = missileStorageParentTransform.GetChild(child);
+
+            for (int i = 0; i < missileParentTransform.childCount; i++) {
+                GameObject missile = missileParentTransform.GetChild(i).gameObject;
+                MissilePhysics missilePhysics = missile.GetComponent<MissilePhysics>();
+
+                missilePhysics.CreateMissileData();
+                missilesData.Add(missilePhysics.GetMissileData());
+            }
+        }
+    }
+
+    public static void BuildMissileStorage(GameObject jetObject, SceneConfig sceneConfig) {
+        Transform missileStorageParentTransform = GetMissileStorageParentObject(jetObject, sceneConfig).transform;
+        int countChilds = missileStorageParentTransform.childCount;
+
+        for (int child = 0; child < sceneConfig.numMissilesPerJet; child++) {
+            int indexChild = child % countChilds;
+            Transform missileParentTransform = missileStorageParentTransform.GetChild(indexChild);
+
+            while (missileParentTransform.childCount > 0)
+                Object.DestroyImmediate(missileParentTransform.GetChild(0).gameObject);
+
+            GameObject missilePrefab = sceneConfig.missileGameObject;
+            GameObject missile = Object.Instantiate(
+                missilePrefab, missileParentTransform.position, missileParentTransform.rotation, missileParentTransform
+            );
+        }
     }
 
     public static GameObject GetMissileStorageParentObject(GameObject jetObject, SceneConfig sceneConfig) {

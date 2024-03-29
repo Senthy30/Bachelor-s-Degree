@@ -263,9 +263,18 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Change Scene Watching",
+                    "name": "Change To Next Scene Watching",
                     "type": "Button",
                     "id": "2fdfb0b3-c6cb-4c7b-bf25-000c88384196",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Change To Previous Scene Watching",
+                    "type": "Button",
+                    "id": "76ed37af-1ce9-43f8-a3d0-5bf54622246a",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -275,6 +284,15 @@
                     "name": "Change Team Watching",
                     "type": "Button",
                     "id": "8808c33f-49e4-4fc2-ba26-a103b884aa6d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Shift Pressed",
+                    "type": "Button",
+                    "id": "9ba280ad-700d-4654-88a0-ded913b0fa83",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -296,22 +314,44 @@
                 {
                     "name": "",
                     "id": "025ba06d-32d4-44b2-95a4-85dd88263bc2",
-                    "path": "<Keyboard>/r",
+                    "path": "<Keyboard>/c",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Change Scene Watching",
+                    "action": "Change To Next Scene Watching",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
                     "id": "b73f61e5-0d86-4a33-8ba5-543fa171134d",
-                    "path": "<Keyboard>/t",
+                    "path": "<Keyboard>/r",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "Change Team Watching",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c26a6d5f-2bf6-4b39-8fc5-99dd57ea63bc",
+                    "path": "<Keyboard>/x",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Change To Previous Scene Watching",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e9f463e1-b708-4e46-a086-4e59b3fca133",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Shift Pressed",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

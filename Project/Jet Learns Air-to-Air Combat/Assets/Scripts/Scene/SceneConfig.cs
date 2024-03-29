@@ -36,9 +36,15 @@ public class SceneConfig : ScriptableObject {
     public Material waterMaterial;
     public Material waterMaterialLowResolution;
 
+    [Header("Missiles")]
+
+    public int numMissilesPerJet;
+    public GameObject missileGameObject;
+
     [Header("Decoy")]
 
     public int numDecoysPerJet;
+    public float maxDecoyViewAngle;
     public GameObject decoyPrefab;
 
     [Header("Names")]

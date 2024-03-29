@@ -44,7 +44,7 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
     [SerializeField] private int m_numCalculationThreads;
     [SerializeField] private ComputeShader aircraftPhysicsShader;
 
-    [SerializeField] private List<AircraftPhysics> aircraftPhysicsArray;
+    [SerializeField] private List <AircraftPhysics> aircraftPhysicsArray;
     [SerializeField] private List <AerodynamicSurfaceConfig> aerodynamicSurfaceConfigs;
 
     private AerodynamicSurfaceConfigShader[] aerodynamicSurfaceConfigShader;
@@ -77,7 +77,7 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
     private void Start() {
         // Unity.Collections.LowLevel.Unsafe.UnsafeUtility.SetLeakDetectionMode(Unity.Collections.NativeLeakDetectionMode.EnabledWithStackTrace);
         // InitializeShader();
-        debugMode = GameObject.FindObjectOfType<DebugMode>();
+        debugMode = FindObjectOfType<DebugMode>();
     }
 
     private void FixedUpdate() {
@@ -96,11 +96,11 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
 
         ApplyForces();
 
-        if (DebugMode.IsActive()) {
+        if (debugMode.IsActive()) {
             sumTimeForJetPhysics += (Time.realtimeSinceStartup - lastTime) * 1000;
             countTimeForJetPhysics++;
-            debugMode.UpdateAverageTimeJetPhysics(sumTimeForJetPhysics / countTimeForJetPhysics);
-            debugMode.UpdateTimeJetPhysics((Time.realtimeSinceStartup - lastTime) * 1000);
+            debugMode.SetAverageTimeJetPhysics(sumTimeForJetPhysics / countTimeForJetPhysics);
+            debugMode.SetTimeJetPhysics((Time.realtimeSinceStartup - lastTime) * 1000);
         }
     }
 
@@ -186,11 +186,11 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
 
         forcesComputeBuffer.GetData(forcesShader);
 
-        if (DebugMode.IsActive()) {
+        if (debugMode.IsActive()) {
             sumTimeForGPU += (Time.realtimeSinceStartup - lastTime) * 1000;
             countTimeForGPU++;
-            debugMode.UpdateAverageTimeGPU(sumTimeForGPU / countTimeForGPU);
-            debugMode.UpdateLastTimeGPU((Time.realtimeSinceStartup - lastTime) * 1000);
+            debugMode.SetAverageTimeGPU(sumTimeForGPU / countTimeForGPU);
+            debugMode.SetLastTimeGPU((Time.realtimeSinceStartup - lastTime) * 1000);
         }
 
         for (int j = 0; j < numAircraftPhysics; j++) {
@@ -307,7 +307,7 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
 
     private void ApplyForces() {
         for (int currAircraft = 0; currAircraft < numAircraftPhysics; currAircraft++) {
-            if (skipAircraftArray[currAircraft] != 0)
+            if (skipAircraftArray[currAircraft] != 0 || aircraftPhysicsArray[currAircraft].GetSkipApplyForces())
                 continue;
 
             //Vector3 forceApplied = (sumForcesShaderPerAircraft[currAircraft].force + sumForcesShaderPredictionPerAircraft[currAircraft].force) / 2f;

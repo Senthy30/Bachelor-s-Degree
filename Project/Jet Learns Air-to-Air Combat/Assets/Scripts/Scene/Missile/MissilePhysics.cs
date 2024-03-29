@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,8 +18,14 @@ public class MissilePhysics : MonoBehaviour {
     // static List<HeatEmission> heatEmissionArray = new List<HeatEmission>();
 
     private bool missileLaunched = false;
-    private Rigidbody rigidbody;
+
+    private MissileData missileData;
+    private Rigidbody rb;
+    private Transform missileParentTransform;
+
     private List<HeatEmission> heatEmissionArray;
+    private event Action<MissileData> actionOnLaunched;
+    private event Action<MissileData> actionOnDestroy;
 
     [SerializeField]
     private float lifeTime = 25f;
@@ -81,8 +88,10 @@ public class MissilePhysics : MonoBehaviour {
     private void Update() {
         if (missileLaunched) {
             currentTimeLife += Time.deltaTime;
-            if (currentTimeLife >= lifeTime)
+            if (currentTimeLife >= lifeTime) {
+                actionOnDestroy?.Invoke(missileData);
                 Destroy(gameObject);
+            }
         }
     }
 
@@ -108,11 +117,12 @@ public class MissilePhysics : MonoBehaviour {
         targetHeat = -1;
         target = null;
         foreach (HeatEmission heatEmission in heatEmissionArray) {
-            if (heatEmission.transform == null)
+            if (heatEmission.transform == null || !heatEmission.transform.gameObject.activeSelf)
                 continue;
 
             float angleToTarget = GetAngleToHeatEmission(heatEmission.transform.position);
-            if (angleToTarget <= maxAngleToDetect && heatEmission.heat > targetHeat) {
+            float distanceToTarget = Vector3.Distance(transform.position, heatEmission.transform.position);
+            if (angleToTarget <= maxAngleToDetect && distanceToTarget <= maxDistanceToDetect && heatEmission.heat > targetHeat) {
                 targetHeat = heatEmission.heat;
                 target = heatEmission.transform.gameObject;
             }
@@ -127,7 +137,7 @@ public class MissilePhysics : MonoBehaviour {
         if (currentSpeed < maxSpeed)
             currentSpeed += speedMultiplier * Time.deltaTime;
 
-        rigidbody.velocity = transform.forward * currentSpeed;
+        rb.velocity = transform.forward * currentSpeed;
         if (target == null)
             return;
 
@@ -155,40 +165,58 @@ public class MissilePhysics : MonoBehaviour {
         Vector3 heading = deviatedPrediction - transform.position;
         Quaternion rotation = Quaternion.LookRotation(heading);
 
-        rigidbody.MoveRotation(Quaternion.RotateTowards(transform.rotation, rotation, rotateSpeed * Time.deltaTime));
+        rb.MoveRotation(Quaternion.RotateTowards(transform.rotation, rotation, rotateSpeed * Time.deltaTime));
     }
 
     private void DetachedDownMovement() {
-        rigidbody.angularVelocity = Vector3.zero;
-        rigidbody.AddForce(transform.up * -currentSpeed + transform.forward * currentSpeed, ForceMode.Acceleration);
+        rb.angularVelocity = Vector3.zero;
+        rb.AddForce(transform.up * -currentSpeed + transform.forward * currentSpeed, ForceMode.Acceleration);
 
         currentTimeDetachDown += Time.deltaTime;
         if (currentTimeDetachDown >= timeDetachDown) {
             missileLaunched = true;
-            rigidbody.constraints = RigidbodyConstraints.None;
+            rb.constraints = RigidbodyConstraints.None;
 
             gameObject.AddComponent<BoxCollider>();
             GetComponent<BoxCollider>().size = new Vector3(1.33f, 1.36f, 7.8f);
 
             detachedDown = false;
-            rigidbody.velocity = new Vector3(
-                rigidbody.velocity.x,
-                0f, 
-                rigidbody.velocity.z
+            rb.velocity = new Vector3(
+                rb.velocity.x,
+                0f,
+                rb.velocity.z
             );
         }
     }
 
-    public void LaunchMissile() {
-        rigidbody = GetComponent<Rigidbody>();
-        currentSpeed = rigidbody.velocity.magnitude;
+    public void CreateMissileData() {
+        missileData = new MissileData(this);
+    }
 
+    public void LaunchMissile() {
+        rb = GetComponent<Rigidbody>();
+        currentSpeed = GetComponent<Rigidbody>().velocity.magnitude;
+
+        actionOnLaunched?.Invoke(missileData);
+        transform.parent = missileParentTransform;
         detachedDown = true;
         smokeGameObject.SetActive(true);
     }
 
+    public void AddFuncInActionOnLaunch(System.Action<MissileData> func) {
+        actionOnLaunched += func;
+    }
+
+    public void AddFuncInActionOnCollision(System.Action<MissileData> func) {
+        actionOnDestroy += func;
+    }
+
     public void SetHeatEmissionArray(List<HeatEmission> heatEmissionsArray) {
         heatEmissionArray = heatEmissionsArray;
+    }
+
+    public void SetMissileParentTransform(Transform missileParentTransform) {
+        this.missileParentTransform = missileParentTransform;
     }
 
     public void TriggerFindTarget() {
@@ -200,11 +228,45 @@ public class MissilePhysics : MonoBehaviour {
         return missileLaunched;
     }
 
+    public MissileData GetMissileData() {
+        return missileData;
+    }
+
+    public GameObject GetTarget() {
+        return target;
+    }
+
     private void OnCollisionEnter(Collision collision) {
+        actionOnDestroy?.Invoke(missileData);
         Destroy(gameObject);
     }
 
+#if UNITY_EDITOR
+
+    [Header("Gizmos")]
+
+    [SerializeField] private bool enableGizmos = true;
+    [SerializeField] private bool displayOnlyWhenSelected = true;
+    [SerializeField] private int numCirclesDivisions = 1;
+
     private void OnDrawGizmos() {
+        if (!displayOnlyWhenSelected)
+            DrawGizmos();
+    }
+
+    private void OnDrawGizmosSelected() {
+        if (displayOnlyWhenSelected)
+            DrawGizmos();
+    }
+
+    private void DrawGizmos() {
+        if (!enableGizmos)
+            return;
+
+        Color color = target != null ? Color.red : Color.white;
+
+        GizmosDraw.DrawCone(transform, maxAngleToDetect, maxDistanceToDetect, numCirclesDivisions, color);
+
         if (missileLaunched && target != null) {
             Gizmos.color = Color.red;
             Gizmos.DrawLine(transform.position, standardPrediction);
@@ -213,5 +275,7 @@ public class MissilePhysics : MonoBehaviour {
             Gizmos.DrawLine(standardPrediction, deviatedPrediction);
         }
     }
+
+#endif
 
 }

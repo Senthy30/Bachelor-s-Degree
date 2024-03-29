@@ -52,6 +52,15 @@ public class AircraftCarrierData : IAircraftCarrierData {
         transformJetSpawnPoint = m_object.transform.Find(sceneConfig.nameJetSpawnPointObject).transform;
     }
 
+    public void Rebuild() {
+        AircraftCarrierUtils.SetLowNHighAircraftCarrierObjectActive(m_object, sceneConfig);
+        m_object.transform.localPosition = AircraftCarrierUtils.GetAircraftCarrierPosition(
+            m_idScene, m_team, listOfValidAircraftCarrierCoords, sceneConfig
+        );
+        m_object.transform.rotation = AircraftCarrierUtils.GetAircraftCarrierRotation(m_idScene, m_team);
+        transformJetSpawnPoint = m_object.transform.Find(sceneConfig.nameJetSpawnPointObject).transform;
+    }
+
     public static void SetSceneConfig(SceneConfig config) {
         sceneConfig = config;
     }

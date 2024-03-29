@@ -7,13 +7,20 @@ public class JetCollision {
     private static SceneConfig sceneConfig;
 
     private int indexForPhysicsCalculationArray;
+    private Team m_team;
+    private SceneData m_sceneData;
     private GameObject m_object;
 
-    public JetCollision(GameObject jet) {
+    public JetCollision(Team team, GameObject jet, SceneData sceneData) {
+        m_team = team;
         m_object = jet;
+        m_sceneData = sceneData;
     }
 
-    public void OnCollisionEnter(Collision collision) {     
+    public void OnCollisionEnter(Collision collision) {
+        if (!m_object.activeSelf)
+            return;
+
         bool wheelTouchedRunway = true;
 
         for (int i = 0; i < collision.contacts.Length; i++) {
@@ -43,11 +50,14 @@ public class JetCollision {
             return;
         }
 
-        Debug.Log("Explode");
         Object.FindObjectOfType<TheaterPhysicsCalculation>().MarkAircraftPyhsicsForSkipping(indexForPhysicsCalculationArray, 1);
-        if (m_object != null) {
-            Object.Destroy(m_object);
-        }
+        Object.FindObjectOfType<TheaterData>().JetExploded(m_object.transform);
+
+        m_object.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        m_object.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+        m_object.GetComponent<AircraftController>().ReconfigToInitialState();
+        m_object.gameObject.SetActive(false);
+        m_sceneData.JetExploded(m_team);
     }
 
     private bool CheckWheelTouchedRunway(int thisColliderLayer, int otherColliderLayer) {

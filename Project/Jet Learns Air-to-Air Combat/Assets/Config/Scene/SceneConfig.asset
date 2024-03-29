@@ -32,7 +32,9 @@ MonoBehaviour:
   waterNumChunks: {x: 4, y: 4}
   waterMaterial: {fileID: 2100000, guid: a652350cee76fe44d8cffe9f6c18c6ff, type: 2}
   waterMaterialLowResolution: {fileID: 2100000, guid: 6dd04445a2ea1804a98239ab8a675c24, type: 2}
-  numDecoysPerJet: 20
+  numMissilesPerJet: 6
+  missileGameObject: {fileID: 1016402751503933191, guid: e729504283fdd354aa3fb42a9e007602, type: 3}
+  numDecoysPerJet: 3
   decoyPrefab: {fileID: 3504330353129792191, guid: fb396786870914e478a54526bf7ad867, type: 3}
   modelObjectName: Model
   lowResolutionObjectName: Low Resolution

@@ -6,6 +6,7 @@ public class SceneBuilder {
 
     // scene builder data
     private int m_idScene;
+
     private SceneConfig m_sceneConfig;
     private SceneData m_sceneData;
     private GameObject m_sceneObject;
@@ -33,16 +34,21 @@ public class SceneBuilder {
         BuildScene();
     }
 
+    public void RebuildScene() {
+        RebuildComponents();
+    }
+
     private void BuildScene() {
         FindParentsObjects();
 
         BuildComponents();
+
         SetSceneComponentsBuilt();
     }
 
     private void BuildComponents() {
         AircraftCarrierData.ClearListOfValidAircraftCarrierCoords();
-        m_sceneComponents = new SceneComponents(m_sceneConfig);
+        m_sceneComponents = new SceneComponents(m_sceneConfig, m_sceneData);
 
         foreach (Team team in System.Enum.GetValues(typeof(Team))) {
             AircraftCarrierData aircraftCarrierData = BuildAircraftCarrier(team);
@@ -58,6 +64,29 @@ public class SceneBuilder {
         m_sceneComponents.SetBoxData(BuildBox());
         m_sceneComponents.SetWaterData(BuildWater());
         m_sceneComponents.SetMissilePhysicsHeatEmission();
+        m_sceneComponents.SetJetMissilesSceneParentObject(m_missileParentTransform);
+    }
+
+    private void RebuildComponents() {
+        if (m_sceneComponents == null) {
+            Debug.LogError("SceneComponents not built");
+            return;
+        }
+
+        m_sceneComponents.ClearMissiles();
+        m_sceneComponents.ClearHeatEmission();
+        AircraftCarrierData.ClearListOfValidAircraftCarrierCoords();
+
+        foreach (Team team in System.Enum.GetValues(typeof(Team))) { 
+            RebuildAircraftCarrier(team);
+            RebuildJet(team);
+        }
+
+        DeleteAllDecoys();
+        DeleteAllMissiles();
+        m_sceneComponents.SetMissilePhysicsHeatEmission();
+        m_sceneComponents.SetJetMissilesSceneParentObject(m_missileParentTransform);
+        Object.FindObjectOfType<TheaterData>().ChangeViewModeIfViewMissileIsActive();
     }
 
     private void SetSceneComponentsBuilt() {
@@ -68,9 +97,20 @@ public class SceneBuilder {
         return new AircraftCarrierData(m_idScene, team, m_aircraftCarrierParentTransform);
     }
 
+    private void RebuildAircraftCarrier(Team team) {
+        m_sceneComponents.GetAircraftCarrierData(team).Rebuild();
+    }
+
     private JetData BuildJet(Team team, Transform jetSpawnTransform) {
-        JetData jetData = new JetData(team, jetSpawnTransform, m_jetsParentTransform, m_sceneObject);
-        return jetData;
+        return new JetData(team, jetSpawnTransform, m_jetsParentTransform, m_sceneObject, m_sceneComponents); ;
+    }
+
+    private void RebuildJet(Team team) {
+        JetData jetData = m_sceneComponents.GetJetData(team);
+
+        jetData.Rebuild();
+        jetData.SetNumDecoys(m_sceneConfig.numDecoysPerJet);
+        m_sceneComponents.AddHeatEmission(new HeatEmission(jetData.GetObject().transform, 1));
     }
 
     private BoxData BuildBox() {
@@ -95,6 +135,18 @@ public class SceneBuilder {
         return decoyData;
     }
 
+    private void DeleteAllDecoys() {
+        foreach (Transform child in m_decoyParentTransform) {
+            Object.Destroy(child.gameObject);
+        }
+    }
+
+    private void DeleteAllMissiles() {
+        foreach (Transform child in m_missileParentTransform) {
+            Object.Destroy(child.gameObject);
+        }
+    }
+
     private void FindParentsObjects() {
         Transform transform = m_sceneObject.transform;
 
@@ -104,10 +156,6 @@ public class SceneBuilder {
         m_decoyParentTransform = transform.Find(m_sceneConfig.nameDecoyParentObject).transform;
         m_waterParentTransform = transform.Find(m_sceneConfig.nameWaterParentObject).transform;
         m_boxParentTransform = transform.Find(m_sceneConfig.nameBoxParentObject).transform;
-    }
-
-    private Resolution GetResolution() {
-        return m_sceneConfig.resolution;
     }
 
 }

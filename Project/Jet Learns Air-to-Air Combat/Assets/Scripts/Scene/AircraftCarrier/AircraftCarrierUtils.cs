@@ -51,7 +51,7 @@ public static class AircraftCarrierUtils {
         return Quaternion.Euler(0f, UnityEngine.Random.Range(-179f, 179f), 0f);
     }
 
-    private static Vector3 GetAircraftCarrierPosition(
+    public static Vector3 GetAircraftCarrierPosition(
         int idScene, Team team, List<Vector2Int> listOfValidAircraftCarrierCoords, SceneConfig sceneConfig
     ) {
         if (TheaterData.GetRebuildScene()) {
@@ -61,7 +61,7 @@ public static class AircraftCarrierUtils {
         }
     }
 
-    private static Quaternion GetAircraftCarrierRotation(int idScene, Team team) {
+    public static Quaternion GetAircraftCarrierRotation(int idScene, Team team) {
         if (TheaterData.GetRebuildScene()) {
             return GetRandomRotation();
         } else {

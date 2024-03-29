@@ -113,12 +113,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lifeTime: 25
   minTimeToFindTarget: 0.2
-  maxAngleToDetect: 45
-  maxDistanceToDetect: 750
+  maxAngleToDetect: 35
+  maxDistanceToDetect: 2000
   currentSpeed: 15
   speedMultiplier: 25
   maxSpeed: 200
-  rotateSpeed: 90
+  rotateSpeed: 60
   timeDetachDown: 0.6
   maxDistancePredict: 400
   minDistancePredict: 50
@@ -127,6 +127,9 @@ MonoBehaviour:
   deviationSpeed: 2
   smokeGameObject: {fileID: 706423878906374018}
   target: {fileID: 0}
+  enableGizmos: 0
+  displayOnlyWhenSelected: 0
+  numCirclesDivisions: 40
 --- !u!1 &5536948543679630441
 GameObject:
   m_ObjectHideFlags: 0
