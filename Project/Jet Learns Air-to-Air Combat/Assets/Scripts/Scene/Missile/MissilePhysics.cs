@@ -78,21 +78,15 @@ public class MissilePhysics : MonoBehaviour {
     private GameObject smokeGameObject;
 
     private int targetHeat = 0;
+    private Vector3 lastVelocity;
+    private Vector3 acceleration;
     [SerializeField]
     private GameObject target;
 
     private void Awake() {
         smokeGameObject.SetActive(false);
-    }
-
-    private void Update() {
-        if (missileLaunched) {
-            currentTimeLife += Time.deltaTime;
-            if (currentTimeLife >= lifeTime) {
-                actionOnDestroy?.Invoke(missileData);
-                Destroy(gameObject);
-            }
-        }
+        lastVelocity = Vector3.zero;
+        acceleration = Vector3.zero;
     }
 
     private void FixedUpdate() {
@@ -102,16 +96,34 @@ public class MissilePhysics : MonoBehaviour {
         if (!missileLaunched)
             return;
 
-        FindTarget();
+        FindTarget(null);
         MissileMovement();
+
+        if (missileLaunched) {
+            currentTimeLife += Time.fixedDeltaTime;
+            if (currentTimeLife >= lifeTime) {
+                actionOnDestroy?.Invoke(missileData);
+                Destroy(gameObject);
+            }
+        }
+
+        acceleration = (rb.velocity - lastVelocity) / Time.fixedDeltaTime;
+        lastVelocity = rb.velocity;
     }
 
-    private void FindTarget() {
-        currentTimeWaitedToFindTarget -= Time.deltaTime;
+    private void FindTarget(Transform ignoreTransform) {
+        currentTimeWaitedToFindTarget -= Time.fixedDeltaTime;
         if (currentTimeWaitedToFindTarget <= 0)
             currentTimeWaitedToFindTarget = minTimeToFindTarget;
         else {
             return;
+        }
+
+        if (target != null) {
+            AircraftController aircraftControllerBefore = target.GetComponent<AircraftController>();
+            if (aircraftControllerBefore != null) {
+                aircraftControllerBefore.SetIncomingMissileTransform(null);
+            }
         }
 
         targetHeat = -1;
@@ -119,12 +131,21 @@ public class MissilePhysics : MonoBehaviour {
         foreach (HeatEmission heatEmission in heatEmissionArray) {
             if (heatEmission.transform == null || !heatEmission.transform.gameObject.activeSelf)
                 continue;
+            if (ignoreTransform != null && heatEmission.transform == ignoreTransform)
+                continue;
 
             float angleToTarget = GetAngleToHeatEmission(heatEmission.transform.position);
             float distanceToTarget = Vector3.Distance(transform.position, heatEmission.transform.position);
             if (angleToTarget <= maxAngleToDetect && distanceToTarget <= maxDistanceToDetect && heatEmission.heat > targetHeat) {
                 targetHeat = heatEmission.heat;
                 target = heatEmission.transform.gameObject;
+            }
+        }
+
+        if (target != null) {
+            AircraftController aircraftControllerAfter = target.GetComponent<AircraftController>();
+            if (aircraftControllerAfter != null) {
+                aircraftControllerAfter.SetIncomingMissileTransform(transform);
             }
         }
     }
@@ -135,7 +156,7 @@ public class MissilePhysics : MonoBehaviour {
 
     private void MissileMovement() {
         if (currentSpeed < maxSpeed)
-            currentSpeed += speedMultiplier * Time.deltaTime;
+            currentSpeed += speedMultiplier * Time.fixedDeltaTime;
 
         rb.velocity = transform.forward * currentSpeed;
         if (target == null)
@@ -165,14 +186,14 @@ public class MissilePhysics : MonoBehaviour {
         Vector3 heading = deviatedPrediction - transform.position;
         Quaternion rotation = Quaternion.LookRotation(heading);
 
-        rb.MoveRotation(Quaternion.RotateTowards(transform.rotation, rotation, rotateSpeed * Time.deltaTime));
+        rb.MoveRotation(Quaternion.RotateTowards(transform.rotation, rotation, rotateSpeed * Time.fixedDeltaTime));
     }
 
     private void DetachedDownMovement() {
         rb.angularVelocity = Vector3.zero;
         rb.AddForce(transform.up * -currentSpeed + transform.forward * currentSpeed, ForceMode.Acceleration);
 
-        currentTimeDetachDown += Time.deltaTime;
+        currentTimeDetachDown += Time.fixedDeltaTime;
         if (currentTimeDetachDown >= timeDetachDown) {
             missileLaunched = true;
             rb.constraints = RigidbodyConstraints.None;
@@ -193,7 +214,7 @@ public class MissilePhysics : MonoBehaviour {
         missileData = new MissileData(this);
     }
 
-    public void LaunchMissile() {
+    public void LaunchMissile(Transform ignoreTransform) {
         rb = GetComponent<Rigidbody>();
         currentSpeed = GetComponent<Rigidbody>().velocity.magnitude;
 
@@ -201,6 +222,8 @@ public class MissilePhysics : MonoBehaviour {
         transform.parent = missileParentTransform;
         detachedDown = true;
         smokeGameObject.SetActive(true);
+
+        FindTarget(ignoreTransform);
     }
 
     public void AddFuncInActionOnLaunch(System.Action<MissileData> func) {
@@ -221,15 +244,29 @@ public class MissilePhysics : MonoBehaviour {
 
     public void TriggerFindTarget() {
         currentTimeWaitedToFindTarget = -1;
-        FindTarget();
+        FindTarget(null);
     }
 
     public bool GetMissileLaunched() {
         return missileLaunched;
     }
 
+    public Vector3 GetVelocity() {
+        if (rb == null)
+            return Vector3.zero;
+        return rb.velocity;
+    }
+
+    public Vector3 GetAcceleration() {
+        return acceleration;
+    }
+
     public MissileData GetMissileData() {
         return missileData;
+    }
+
+    public void SetTarget(GameObject target) {
+        this.target = target;
     }
 
     public GameObject GetTarget() {

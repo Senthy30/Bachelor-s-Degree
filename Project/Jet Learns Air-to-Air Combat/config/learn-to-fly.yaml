@@ -1,0 +1,49 @@
+behaviors:
+  Learn to fly:
+    trainer_type: ppo
+    hyperparameters:
+      batch_size: 2048
+      buffer_size: 65536
+      learning_rate: 0.0005
+      beta: 0.03
+      epsilon: 0.125
+      lambd: 0.95
+      num_epoch: 8
+      learning_rate_schedule: linear
+      epsilon_schedule: linear
+
+    network_settings:
+      normalize: true
+      hidden_units: 256
+      num_layers: 2
+      memory:
+        sequence_length: 64
+        memory_size: 256
+
+    reward_signals:
+      extrinsic:
+        strength: 1.0
+        gamma: 0.999
+
+      curiosity:
+        strength: 0.1
+        gamma: 0.999
+        encoding_size: 256
+        learning_rate: 0.0005
+
+      gail:
+        strength: 0.25
+        gamma: 0.999
+        demo_path: "Demos/LearnToFly.demo"
+
+    behavioral_cloning:
+      strength: 0.25
+      gamma: 0.999
+      demo_path: "Demos/LearnToFly.demo"
+      steps: 5000000
+
+    keep_checkpoints: 20
+    max_steps: 40000000
+    checkpoint_interval: 1000000
+    time_horizon: 1024
+    summary_freq: 25000

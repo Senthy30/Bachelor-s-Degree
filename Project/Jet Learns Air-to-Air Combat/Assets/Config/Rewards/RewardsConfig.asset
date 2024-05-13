@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e8d68b66bcff7b40a2ecd1647b65f05, type: 3}
+  m_Name: RewardsConfig
+  m_EditorClassIdentifier: 
+  jetInboundBox: 0.1
+  advantageBehind: 0.2
+  hasInRange: 0.4
+  chase: 0.1
+  launchMissile: 500
+  dropDecoy: 1250
+  shirksIncomingMissile: 1250
+  targetDestroyedHimself: 0
+  destroyTargetByMissile: 10000
+  jetNotInboundBox: -0.25
+  destroyHimself: -10000
+  targetLaunchMissile: -250
+  targetShirksIncomingMissile: -250
+  distanceToFloorNCeiling: 150
+  distanceToWall: 300
+  distanceAdvantageBehind: 2000
+  distanceHasInRange: 2000
+  distanceChase: 3000
+  distanceLaunchMissile: 2000
+  angleAdvantageBehind: 35
+  angleHasInRange: 35
+  angleChase: 15
+  angleLaunchMissile: 35

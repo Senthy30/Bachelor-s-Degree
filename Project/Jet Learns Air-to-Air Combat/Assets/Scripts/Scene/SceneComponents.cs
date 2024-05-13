@@ -23,6 +23,8 @@ public class SceneComponents {
     private List<DecoyData> m_dropedDecoysData = new List<DecoyData>();
     private List<HeatEmission> m_instancesHeatEmission = new List<HeatEmission>();
 
+    private List<EnemiesData> enemiesData = null;
+
     public SceneComponents(SceneConfig sceneConfig, SceneData sceneData) {
         m_sceneConfig = sceneConfig;
         m_sceneData = sceneData;
@@ -46,6 +48,10 @@ public class SceneComponents {
 
     public void AddUnlaunchedMissileData(MissileData missileData) {
         m_unlaunchedMissilesData.Add(missileData);
+    }
+
+    public SceneConfig GetSceneConfig() {
+        return m_sceneConfig;
     }
 
     // Setters ------------------------------------------------
@@ -178,6 +184,10 @@ public class SceneComponents {
         return m_launchedMissilesData;
     }
 
+    public void AddLaunchedMissileData(MissileData missileData) {
+        m_launchedMissilesData.Add(missileData);
+    }
+
     public void TriggerMissilesFindTarget() {
         for (int i = 0; i < m_instancesJetData.Count; i++) {
             if (m_instancesJetData[i] != null && m_instancesJetData[i].GetObject() != null)
@@ -199,6 +209,43 @@ public class SceneComponents {
 
     public void AddDecoyData(DecoyData decoyData) {
         m_dropedDecoysData.Add(decoyData);
+    }
+
+    // Box --------------------------------------------------
+
+    public BoxData GetBoxData() {
+        return m_boxData;
+    }
+
+    // Enemies ------------------------------------------------
+
+    public void BuildEnemiesData() {
+        enemiesData = new List<EnemiesData> ();
+        foreach (Team ownshipTeam in System.Enum.GetValues(typeof(Team))) {
+            foreach (Team targetTeam in System.Enum.GetValues(typeof(Team))) {
+                if (ownshipTeam == targetTeam) {
+                    enemiesData.Add(null);
+                    continue;
+                }
+
+                JetData ownshipJetData = GetJetData(ownshipTeam);
+                JetData targetJetData = GetJetData(targetTeam);
+
+                enemiesData.Add(new EnemiesData(ownshipJetData, targetJetData));
+            }
+        }
+    }
+
+    public EnemiesData GetEnemiesData(Team ownshipTeam, Team targetTeam) {
+        int numTeams = TheaterData.GetNumTeams();
+        int ownshipTeamValue = (int)ownshipTeam;
+        int targetTeamValue = (int)targetTeam;
+
+        return enemiesData[ownshipTeamValue * numTeams + targetTeamValue];
+    }
+
+    public EnemyChunksData GetEnemyChunksData() {
+        return m_enemyChunksData;
     }
 
     // Remove methods -----------------------------------------
@@ -230,6 +277,10 @@ public class SceneComponents {
 
     public void ClearHeatEmission() {
         m_instancesHeatEmission.Clear();
+    }
+
+    public void ClearDecoys() {
+        m_dropedDecoysData.Clear();
     }
 
     // Static methods ------------------------------------------

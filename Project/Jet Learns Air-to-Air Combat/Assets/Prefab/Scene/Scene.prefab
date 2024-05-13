@@ -31,6 +31,104 @@ Transform:
   m_Father: {fileID: 7692342718047794728}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2448145911510059009
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7446073267941169919}
+  - component: {fileID: 5099099839190916432}
+  - component: {fileID: 6089999625589117865}
+  - component: {fileID: 8555233713594223462}
+  m_Layer: 0
+  m_Name: Down
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7446073267941169919
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2448145911510059009}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: -0.7071068, w: 0}
+  m_LocalPosition: {x: 0, y: -0.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1141191069317743871}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 90, y: 180, z: 0}
+--- !u!33 &5099099839190916432
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2448145911510059009}
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &6089999625589117865
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2448145911510059009}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &8555233713594223462
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2448145911510059009}
+  m_Enabled: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 46b1a9ae8e8ae4a46844f2247e55aa61, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &6859605242311025845
 GameObject:
   m_ObjectHideFlags: 0
@@ -175,13 +273,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneConfig: {fileID: 11400000, guid: f6830eda07f3ec74db8f8cb5a1497221, type: 2}
-  m_selectedTeam: 0
-  m_printEveryFrame: 1
+  m_selectedTeamInputs: 0
+  m_printInputsEveryFrame: 1
   m_printOwnshipDecoys: 0
   m_printOwnshipMissiles: 0
   m_printOwnshipPitch: 0
   m_printOwnshipRoll: 0
   m_printOwnshipYaw: 0
+  m_printOwnshipFlap: 0
   m_printOwnshipThrottle: 0
   m_printOwnshipPosition: 0
   m_printOwnshipVelocity: 0
@@ -196,9 +295,28 @@ MonoBehaviour:
   m_printTargetRelativeVelocity: 0
   m_printTargetRelativeAcceleration: 0
   m_printDecoysInRangeRelativePosition: 0
-  m_printLaunchedMissileDistanceToTarget: 1
-  m_printIncomingMissileDistanceToOwnship: 1
-  m_printIncomingMissileRelativeDirection: 1
+  m_printLaunchedMissileDistanceToTarget: 0
+  m_printIncomingMissileDistanceToOwnship: 0
+  m_printIncomingMissileRelativeDirection: 0
+  m_selectedTeamRewards: 0
+  m_printRewardsEveryFrame: 0
+  m_printTotalReward: 0
+  m_printOwnshipInboundReward: 0
+  m_printOwnshipAdvantageBehindTargetReward: 0
+  m_printOwnshipHasTargetInRangeReward: 0
+  m_printOwnshipChasesTargetReward: 1
+  m_printTargetAdvantageBehindOwnshipReward: 0
+  m_printTargetHasOwnshipInRangeReward: 0
+  m_printTargetChasesOwnshipReward: 1
+  m_selectedTeamActions: 0
+  m_printActionsEveryFrame: 0
+  m_printRollAction: 0
+  m_printPitchAction: 0
+  m_printYawAction: 0
+  m_printThrustAction: 0
+  m_printFlapsAction: 0
+  m_printLaunchMissileAction: 0
+  m_printDropDecoyAction: 0
 --- !u!1 &7692342718205063236
 GameObject:
   m_ObjectHideFlags: 0
@@ -237,6 +355,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 7692342718047794728}
     m_Modifications:
+    - target: {fileID: 1867185262615346068, guid: 28b7d9c30e1d01545a3111a740598176, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1867185262805341160, guid: 28b7d9c30e1d01545a3111a740598176, type: 3}
       propertyPath: m_RootOrder
       value: 5
@@ -285,10 +407,23 @@ PrefabInstance:
       propertyPath: m_Name
       value: Box
       objectReference: {fileID: 0}
+    - target: {fileID: 1867185263166707914, guid: 28b7d9c30e1d01545a3111a740598176, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1867185264452124383, guid: 28b7d9c30e1d01545a3111a740598176, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 28b7d9c30e1d01545a3111a740598176, type: 3}
 --- !u!4 &1141191069171712669 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1867185262805341160, guid: 28b7d9c30e1d01545a3111a740598176, type: 3}
+  m_PrefabInstance: {fileID: 1603211243111272821}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1141191069317743871 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1867185262917260682, guid: 28b7d9c30e1d01545a3111a740598176, type: 3}
   m_PrefabInstance: {fileID: 1603211243111272821}
   m_PrefabAsset: {fileID: 0}

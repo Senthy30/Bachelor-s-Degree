@@ -15,12 +15,15 @@ public class DebugMode : MonoBehaviour {
 
     [SerializeField] private bool m_displayTeam;
     [SerializeField] private bool m_displayScene;
+    [SerializeField] private bool m_displayTimeRemaining;
 
     private Team m_team;
     private int m_scene;
+    private int m_timeRemaining;
 
     [SerializeField] private TextMeshProUGUI m_teamText;
     [SerializeField] private TextMeshProUGUI m_sceneText;
+    [SerializeField] private TextMeshProUGUI m_timeRemainingText;
 
     [Header("Profiler")]
 
@@ -91,6 +94,9 @@ public class DebugMode : MonoBehaviour {
         if (m_sceneText != null && m_displayScene) {
             m_sceneText.text = "Scene: " + m_scene.ToString();
         }
+        if (m_timeRemainingText != null && m_displayTimeRemaining) {
+            m_timeRemainingText.text = "Time Remaining: " + m_timeRemaining.ToString();
+        }
     }
 
     private void UpdateProfilerData() {
@@ -145,6 +151,10 @@ public class DebugMode : MonoBehaviour {
 
     public void SetScene(int scene) {
         m_scene = scene;
+    }
+
+    public void SetTimeRemaining(float time) {
+        m_timeRemaining = (int)time;
     }
 
     public void SetAverageTimeJetPhysics(float time) {

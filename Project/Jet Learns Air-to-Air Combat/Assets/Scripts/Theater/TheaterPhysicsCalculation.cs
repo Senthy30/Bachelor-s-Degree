@@ -78,6 +78,9 @@ public class TheaterPhysicsCalculation : MonoBehaviour {
         // Unity.Collections.LowLevel.Unsafe.UnsafeUtility.SetLeakDetectionMode(Unity.Collections.NativeLeakDetectionMode.EnabledWithStackTrace);
         // InitializeShader();
         debugMode = FindObjectOfType<DebugMode>();
+
+        //int idx = aircraftPhysicsShader.FindKernel("CSMain");
+        //Debug.LogWarning("kernel index: " + idx);
     }
 
     private void FixedUpdate() {

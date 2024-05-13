@@ -16,10 +16,12 @@ MonoBehaviour:
   sceneSize: {x: 500, y: 100, z: 500}
   margin: 1000
   yAircraftCarrier: -18.5
-  scenePrefab: {fileID: 0}
+  scenePrefab: {fileID: 7692342718047794735, guid: 834fa22584d975d4786af284f61e1983, type: 3}
   boxParentObject: {fileID: 1867185262805341161, guid: 28b7d9c30e1d01545a3111a740598176, type: 3}
   showChunksEnemies: 0
   minDistanceChunksEnemies: 2
+  minDistanceChunksJets: 1
+  dimChunksEnemiesSpawn: {x: 6, y: 4, z: 6}
   numChunksEnemiesSpawn: {x: 6, y: 6}
   chunkMaterial: {fileID: 2100000, guid: 6c64515b77992c74bae308f8c00c6103, type: 2}
   aircraftCarrierGameObject: {fileID: 1572100352888701432, guid: 6c77e38bd3879164d891447dd7c3e89d, type: 3}
@@ -29,12 +31,17 @@ MonoBehaviour:
   teamJetTexture:
   - {fileID: 2800000, guid: f3691e982dfab1843a12c74ce99a282e, type: 3}
   - {fileID: 2800000, guid: 7020f283c8037c14bae769a2dc171b60, type: 3}
+  minMaxDistanceJetsOnSpawn: {x: 400, y: 1000}
+  minMaxSpeedJetOnSpawn: {x: 50, y: 160}
+  maxVelocityJet: 200
+  maxAngularVelocityJet: 10
   waterNumChunks: {x: 4, y: 4}
   waterMaterial: {fileID: 2100000, guid: a652350cee76fe44d8cffe9f6c18c6ff, type: 2}
   waterMaterialLowResolution: {fileID: 2100000, guid: 6dd04445a2ea1804a98239ab8a675c24, type: 2}
   numMissilesPerJet: 6
   missileGameObject: {fileID: 1016402751503933191, guid: e729504283fdd354aa3fb42a9e007602, type: 3}
   numDecoysPerJet: 3
+  maxDecoyViewAngle: 40
   decoyPrefab: {fileID: 3504330353129792191, guid: fb396786870914e478a54526bf7ad867, type: 3}
   modelObjectName: Model
   lowResolutionObjectName: Low Resolution
@@ -55,3 +62,4 @@ MonoBehaviour:
   WHEEL_LAYER_NAME: Wheel
   AIRCRAFT_RUNWAY_LAYER_NAME: AircraftRunway
   DECOY_LAYER_NAME: Decoy
+  MISSILE_LAYER_NAME: Missile

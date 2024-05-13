@@ -7,6 +7,8 @@ public class AircraftController : MonoBehaviour {
 
     private enum InputType { HORIZONTAL, VERTICAL, YAW, THRUST }
 
+    private static TheaterData theaterData;
+
     const float epsilon = 1e-5f;
 
     [SerializeField]
@@ -39,6 +41,7 @@ public class AircraftController : MonoBehaviour {
 
     private bool flapInputWasPressed;
     private const float maxFlapInput = 0.3f;
+    private float flapInputSign;
     private float flapInputTimePressed = 0f;
     [Range(0, 1)]
     public float flapInput;
@@ -104,8 +107,13 @@ public class AircraftController : MonoBehaviour {
     private bool attackInputWasPressed;
     [SerializeField] private GameObject missileStorageObject;
     private Transform sceneMissileParentObject;
+    private Transform incomingMissileTransform;
     private List<GameObject> missileArray = new List<GameObject>();
 
+    [SerializeField] public bool m_useFakeDecoyData = false;
+    [SerializeField] public bool m_useFakeMissileData = false;
+
+    private int skipHandleInputsEvent;
     private Team team;
     private AircraftPhysics aircraftPhysics;
     private JetData jetData;
@@ -118,7 +126,20 @@ public class AircraftController : MonoBehaviour {
     private float thrustInputSign;
 
     public Vector3 acceleration;
-    public Vector3 lastVelocity;
+    public Vector3 angularAcceleration;
+    public Vector3 lastVelocity = Vector3.zero;
+    public Vector3 lastAngularVelocity = Vector3.zero;
+
+    private void Awake() {
+        gearInputWasPressed = false;
+        gearIsClosed = false;
+        gearAnimationIsRunning = false;
+
+        flapInputWasPressed = false;
+        attackInputWasPressed = false;
+        flapInputSign = 0.0f;
+        gearPositionYWhenGearIsOpened = wheelsParentObject.localPosition.y;
+    }
 
     private void Start() {
         aircraftPhysics = GetComponent<AircraftPhysics>();
@@ -126,23 +147,16 @@ public class AircraftController : MonoBehaviour {
 
         Cursor.lockState = CursorLockMode.Locked;
 
-        gearInputWasPressed = false;
-        gearIsClosed = false;
-        gearAnimationIsRunning = false;
-
-        flapInputWasPressed = false;
-        attackInputWasPressed = false;
-        gearPositionYWhenGearIsOpened = wheelsParentObject.localPosition.y;
-
         Material engineFlameMaterial = leftFlameObject.GetComponent<Renderer>().material;
         leftFlameObject.GetComponent<Renderer>().material = new Material(engineFlameMaterial);
         rightFlameObject.GetComponent<Renderer>().material = new Material(engineFlameMaterial);
 
         PrecalculateAndStoreSufaces();
-    }
 
-    private void Update() {
-        HandleInputsEvent();
+        JetAgent jetAgent = gameObject.GetComponent<JetAgent>();
+        if (jetAgent != null) {
+            jetAgent.ConfigureOnStart(this);
+        }
     }
 
     private void FixedUpdate() {
@@ -151,7 +165,11 @@ public class AircraftController : MonoBehaviour {
         aircraftPhysics.SetThrustPercent(thrustInput);
 
         acceleration = (rb.velocity - lastVelocity) / Time.fixedDeltaTime;
+        angularAcceleration = (rb.angularVelocity - lastAngularVelocity) / Time.fixedDeltaTime;
         lastVelocity = rb.velocity;
+        lastAngularVelocity = rb.angularVelocity;
+
+        HandleInputsEvent(false);
     }
 
     public void SetControlSurfecesAngles() {
@@ -176,7 +194,14 @@ public class AircraftController : MonoBehaviour {
         }
     }
 
-    private void HandleInputsEvent() {
+    public void HandleInputsEvent(bool shouldSkipNext) {
+        if (skipHandleInputsEvent > 0) {
+            skipHandleInputsEvent--;
+            return;
+        }
+        if (shouldSkipNext)
+            skipHandleInputsEvent++;
+
         HandleSpecificInputEvent(pitchInputSign, ref pitchInputTimePressed, ref pitchInput, ref pitchLastInputSign);
         HandleSpecificInputEvent(rollInputSign, ref rollInputTimePressed, ref rollInput, ref rollLastInputSign);
         HandleSpecificInputEvent(yawInputSign, ref yawInputTimePressed, ref yawInput, ref yawLastInputSign);
@@ -199,24 +224,24 @@ public class AircraftController : MonoBehaviour {
         }
 
         if (valueInputSign != 0) {
-            valueInputTimePressed += timePressedIncrease * Time.deltaTime;
+            valueInputTimePressed += timePressedIncrease * Time.fixedDeltaTime;
             valueInputTimePressed = Mathf.Clamp(valueInputTimePressed, 0f, 1f);
 
-            valueInput += valueInputSign * inputsEventIncreaseCurve.Evaluate(valueInputTimePressed) * Time.deltaTime * valueMultiplierIncrease;
+            valueInput += valueInputSign * inputsEventIncreaseCurve.Evaluate(valueInputTimePressed) * Time.fixedDeltaTime * valueMultiplierIncrease;
         } else if (valueInput != 0f) {
-            valueInputTimePressed += timePressedDecrease * Time.deltaTime;
+            valueInputTimePressed += timePressedDecrease * Time.fixedDeltaTime;
 
             if (valueInput < 0f) {
-                valueInput += inputsEventDecreaseCurve.Evaluate(Mathf.Abs(valueInput)) * Time.deltaTime * valueMultiplierDecrease;
+                valueInput += inputsEventDecreaseCurve.Evaluate(Mathf.Abs(valueInput)) * Time.fixedDeltaTime * valueMultiplierDecrease;
 
-                if (valueInput > 0f) {
+                if (valueInput > -1e-4f) {
                     valueInput = 0f;
                     return;
                 }
             } else {
-                valueInput -= inputsEventDecreaseCurve.Evaluate(Mathf.Abs(valueInput)) * Time.deltaTime * valueMultiplierDecrease;
+                valueInput -= inputsEventDecreaseCurve.Evaluate(Mathf.Abs(valueInput)) * Time.fixedDeltaTime * valueMultiplierDecrease;
 
-                if (valueInput < 0f) {
+                if (valueInput < 1e-4f) {
                     valueInput = 0f;
                     return;
                 }
@@ -234,23 +259,31 @@ public class AircraftController : MonoBehaviour {
             return;
 
         if (flapInputWasPressed) {
-            flapInputTimePressed += timePressedIncrease * Time.deltaTime;
-        } else {
-            flapInputTimePressed -= timePressedDecrease * Time.deltaTime;
+            flapInputSign = 1f - flapInputSign;
+            flapInputWasPressed = false;
         }
 
-        flapInputTimePressed = Mathf.Clamp01(flapInputTimePressed);
-        flapInput = inputsEventIncreaseCurve.Evaluate(flapInputTimePressed) * maxFlapInput;
+        if (flapInputSign > 0f) {
+            flapInputTimePressed += timePressedIncrease * Time.fixedDeltaTime;
+            flapInputTimePressed = Mathf.Clamp01(flapInputTimePressed);
+            flapInput += inputsEventIncreaseCurve.Evaluate(flapInputTimePressed) * maxFlapInput * timePressedDecrease * Time.fixedDeltaTime;
+        } else {
+            flapInputTimePressed -= timePressedDecrease * Time.fixedDeltaTime;
+            flapInputTimePressed = Mathf.Clamp01(flapInputTimePressed);
+            flapInput -= inputsEventDecreaseCurve.Evaluate(flapInputTimePressed) * maxFlapInput * timePressedDecrease * Time.fixedDeltaTime;
+        }
 
-        if (Mathf.Abs(flapInput) < epsilon)
+        if (flapInput >= maxFlapInput)
+            flapInput = maxFlapInput;
+        if (flapInput < epsilon)
             flapInput = 0f;
     }
 
     private void HandleThrustInputEvent() {
         if (thrustInputSign > 0f) {
-            thrustInput += timePressedIncrease * Time.deltaTime;
+            thrustInput += timePressedIncrease * Time.fixedDeltaTime;
         } else if (thrustInputSign < 0f) {
-            thrustInput -= timePressedDecrease * Time.deltaTime;
+            thrustInput -= timePressedDecrease * Time.fixedDeltaTime;
         }
 
         thrustInput = Mathf.Clamp01(thrustInput);
@@ -258,16 +291,23 @@ public class AircraftController : MonoBehaviour {
 
     private void HandleGearInputEvent() {
         if (closeGearAfterTakeOffAutomatically) {
-            if (closeGearAfterTakeOffAutomaticallyCountWheels > 0) {
-                closeGearAfterTakeOffCurrentTime = 0;
+            if (transform.localPosition.y >= SceneRewards.rewardsConfig.distanceToFloorNCeiling) {
+                if (!gearIsClosed && !gearAnimationIsRunning)
+                    gearInputWasPressed = true;
+                closeGearAfterTakeOffAutomatically = false;
             } else {
-                closeGearAfterTakeOffCurrentTime += Time.deltaTime;
-                if (closeGearAfterTakeOffCurrentTime >= closeGearAfterTakeOffTime) {
-                    if (!gearIsClosed && !gearAnimationIsRunning)
-                        gearInputWasPressed = true;
-                    closeGearAfterTakeOffAutomatically = false;
-                }
+                closeGearAfterTakeOffCurrentTime = 0;
             }
+            //if (closeGearAfterTakeOffAutomaticallyCountWheels > 0) {
+            //    closeGearAfterTakeOffCurrentTime = 0;
+            //} else {
+            //    closeGearAfterTakeOffCurrentTime += Time.fixedDeltaTime;
+            //    if (closeGearAfterTakeOffCurrentTime >= closeGearAfterTakeOffTime) {
+            //        if (!gearIsClosed && !gearAnimationIsRunning)
+            //            gearInputWasPressed = true;
+            //        closeGearAfterTakeOffAutomatically = false;
+            //    }
+            //}
         }
 
         if (gearInputWasPressed && !gearAnimationIsRunning) {
@@ -296,34 +336,35 @@ public class AircraftController : MonoBehaviour {
 
             if (TheaterData.GetResolution() == Resolution.HIGH_RESOLUTION) {
                 if (!gearIsClosed && gearAnimator.GetBool("startCloseGearAnimation") && !gearAnimator.GetBool("enterClosedGearState")) {
-                    FinishGearTransition();
-
                     gearAnimator.SetBool("startCloseGearAnimation", false);
                     gearAnimator.SetTrigger("enterClosedGearState");
                     gearAnimator.SetTrigger("idleClosedGearState");
 
-                    gearObject.SetActive(false);
-                    closedGearObject.SetActive(true);
-
                     gearIsClosed = true;
                     gearAnimationIsRunning = false;
+
+                    FinishGearTransition();
+
+                    gearObject.SetActive(false);
+                    closedGearObject.SetActive(true);
                 }
 
                 if (gearIsClosed && gearAnimator.GetBool("startOpenGearAnimation") && !gearAnimator.GetBool("enterOpenedGearState")) {
-                    FinishGearTransition();
-
                     gearAnimator.SetBool("startOpenGearAnimation", false);
                     gearAnimator.SetTrigger("enterOpenedGearState");
+                    ReconfigGearToInitialState();
 
                     gearIsClosed = false;
                     gearAnimationIsRunning = false;
+
+                    FinishGearTransition();
                 }
             } else {
                 if (gearCurrentTimeTransition >= gearTimeTransition) {
-                    FinishGearTransition();
-
                     gearIsClosed = !gearIsClosed;
                     gearAnimationIsRunning = false;
+
+                    FinishGearTransition();
                 }
             }
         }
@@ -372,6 +413,7 @@ public class AircraftController : MonoBehaviour {
         ReconfigFlapsToInitialState();
         ReconfigThrustToInitialState();
         ReconfigGearToInitialState();
+        closeGearAfterTakeOffAutomatically = true;
 
         HandleInputsAnimation();
     }
@@ -394,8 +436,8 @@ public class AircraftController : MonoBehaviour {
         if (gearCurrentTimeTransition >= gearTimeTransition)
             return;
 
-        float moveWith = distanceGearTransition / gearTimeTransition * Time.deltaTime;
-        gearCurrentTimeTransition += Time.deltaTime;
+        float moveWith = distanceGearTransition / gearTimeTransition * Time.fixedDeltaTime;
+        gearCurrentTimeTransition += Time.fixedDeltaTime;
 
         if (!gearIsClosed) {
             //wheelsParentObject.position = new Vector3(wheelsParentObject.position.x, wheelsParentObject.position.y + moveWith, wheelsParentObject.position.z);
@@ -412,7 +454,7 @@ public class AircraftController : MonoBehaviour {
                     wheelsParentObject.localPosition.z
                 );
             } else {
-                waitCurrentTimeToOpenGear += Time.deltaTime;
+                waitCurrentTimeToOpenGear += Time.fixedDeltaTime;
                 gearCurrentTimeTransition = 0;
             }
         }
@@ -422,7 +464,7 @@ public class AircraftController : MonoBehaviour {
         if (!gearIsClosed)
             wheelsParentObject.localPosition = new Vector3(wheelsParentObject.localPosition.x, gearPositionYWhenGearIsOpened, wheelsParentObject.localPosition.z);
         else if (gearIsClosed)
-            wheelsParentObject.localPosition = new Vector3(wheelsParentObject.localPosition.x, gearPositionYWhenGearIsOpened - distanceGearTransition, wheelsParentObject.localPosition.z);    
+            wheelsParentObject.localPosition = new Vector3(wheelsParentObject.localPosition.x, gearPositionYWhenGearIsOpened + distanceGearTransition, wheelsParentObject.localPosition.z);    
     }
 
     private void LaunchMissile() {
@@ -439,7 +481,7 @@ public class AircraftController : MonoBehaviour {
         missileRigidbody.angularVelocity = Vector3.zero;
         missileRigidbody.useGravity = false;
 
-        missileArray[missileArray.Count - 1].GetComponent<MissilePhysics>().LaunchMissile();
+        missileArray[missileArray.Count - 1].GetComponent<MissilePhysics>().LaunchMissile(transform);
         missileArray.RemoveAt(missileArray.Count - 1);
     }
 
@@ -503,7 +545,6 @@ public class AircraftController : MonoBehaviour {
         gearIsClosed = false;
         gearInputWasPressed = false;
 
-        closeGearAfterTakeOffAutomatically = true;
         closeGearAfterTakeOffCurrentTime = 0;
         closeGearAfterTakeOffAutomaticallyCountWheels = 0;
 
@@ -555,12 +596,46 @@ public class AircraftController : MonoBehaviour {
         this.jetData = jetData;
     }
 
-    public void AddMissilesInArray() {
-        foreach (Transform missileParent in missileStorageObject.transform) {
-            foreach (Transform child in missileParent) {
-                missileArray.Add(child.gameObject);
-            }
-        }
+    public void SetIncomingMissileTransform(Transform mTransform) {
+        incomingMissileTransform = mTransform;
+    }
+
+    public Transform GetIncomingMissileTransform() {
+        return incomingMissileTransform;
+    }
+
+    public JetData GetJetData() {
+        return jetData;
+    }
+
+    public SceneData GetSceneData() {
+        return sceneData;
+    }
+
+    public void AddMissilesInArray(List <GameObject> missileArrayTemp) {
+        missileArray = new List<GameObject>(missileArrayTemp);
+    }
+
+    public static void SetTheaterData(TheaterData theaterData) {
+        AircraftController.theaterData = theaterData;
+    }
+
+    // Scenario
+
+    public void SetThrustInputForScenario(float value) {
+        thrustInput = value;
+    }
+
+    public void SetGearClosed() {
+        gearInputWasPressed = false;
+        closeGearAfterTakeOffAutomatically = false;
+        gearIsClosed = true;
+        gearAnimationIsRunning = false;
+
+        FinishGearTransition();
+
+        gearObject.SetActive(false);
+        closedGearObject.SetActive(true);
     }
 
     // Input getters
@@ -577,9 +652,34 @@ public class AircraftController : MonoBehaviour {
         return yawInputSign;
     }
 
+    public float GetFlapInputSign() {
+        return flapInputSign;
+    }
+
     public float GetThrustInput() {
         return thrustInputSign;
     }
+    
+    public bool GetFlapInput() {
+        return flapInputWasPressed;
+    }
+
+    public bool GetGearInput() {
+        return gearInputWasPressed;
+    }
+
+    public bool GetGearIsClosed() {
+        return gearIsClosed;
+    }
+
+    public bool GetDecoyInput() {
+        return decoyInputWasPressed;
+    }
+
+    public bool GetAttackInput() {
+        return attackInputWasPressed;
+    }
+
 
     // Input setters 
 
@@ -600,11 +700,11 @@ public class AircraftController : MonoBehaviour {
     }
 
     public void TriggerFlapInput() {
-        flapInputWasPressed = !flapInputWasPressed;
+        flapInputWasPressed = true;
     }
 
     public void TriggerGearInput() {
-        gearInputWasPressed = !gearInputWasPressed;
+        gearInputWasPressed = true;
     }
 
     public void TriggerDecoyInput() {
@@ -612,7 +712,7 @@ public class AircraftController : MonoBehaviour {
     }
 
     public void TriggerAttackInput() {
-        attackInputWasPressed = !attackInputWasPressed;
+        attackInputWasPressed = true;
     }
 
 

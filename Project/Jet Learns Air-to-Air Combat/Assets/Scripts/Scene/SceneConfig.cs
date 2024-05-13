@@ -18,6 +18,8 @@ public class SceneConfig : ScriptableObject {
 
     public bool showChunksEnemies;
     public int minDistanceChunksEnemies;
+    public int minDistanceChunksJets;
+    public Vector3Int dimChunksEnemiesSpawn;
     public Vector2Int numChunksEnemiesSpawn;
     public Material chunkMaterial;
 
@@ -29,6 +31,10 @@ public class SceneConfig : ScriptableObject {
 
     public List<GameObject> teamJetGameObject = new List<GameObject>();
     public List<Texture2D> teamJetTexture;
+    public Vector2 minMaxDistanceJetsOnSpawn;
+    public Vector2 minMaxSpeedJetOnSpawn;
+    public float maxVelocityJet;
+    public float maxAngularVelocityJet;
 
     [Header("Water Generation")]
 
@@ -79,6 +85,7 @@ public class SceneConfig : ScriptableObject {
     public string WHEEL_LAYER_NAME = "Wheel";
     public string AIRCRAFT_RUNWAY_LAYER_NAME = "AircraftRunway";
     public string DECOY_LAYER_NAME = "Decoy";
+    public string MISSILE_LAYER_NAME = "Missile";
 
     public float GetSizePlane() {
         return sizePlane;

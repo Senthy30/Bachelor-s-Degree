@@ -17,7 +17,7 @@ public class TestGizmos : MonoBehaviour {
 
         m_missilePhysics.SetHeatEmissionArray(heatEmissionArray);
         m_missilePhysics.AddComponent<Rigidbody>();
-        m_missilePhysics.LaunchMissile();
+        m_missilePhysics.LaunchMissile(null);
     }
 
 #if UNITY_EDITOR

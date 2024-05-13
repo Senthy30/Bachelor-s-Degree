@@ -12,12 +12,12 @@ public class AircraftCarrierData : IAircraftCarrierData {
     private GameObject m_object;
 
     public AircraftCarrierData(
-        int idScene, Team team, Transform aircraftCarrierParentTransform
+        int idScene, Team team, Transform aircraftCarrierParentTransform, EnemyChunksData enemyChunksData
     ) {
         m_idScene = idScene;
         m_team = team;
         m_object = AircraftCarrierUtils.InstantiateAircraftCarrierObject(
-            idScene, team, listOfValidAircraftCarrierCoords, aircraftCarrierParentTransform, sceneConfig
+            idScene, team, enemyChunksData, aircraftCarrierParentTransform, sceneConfig
         );
 
         BuildConfigAircraftCarrier();

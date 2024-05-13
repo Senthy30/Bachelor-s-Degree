@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Tarodev;
 using UnityEngine;
 
 public class JetData : IJetData {
@@ -13,6 +14,10 @@ public class JetData : IJetData {
 
     private AircraftPhysics m_aircraftPhysics;
     private JetCollision m_jetCollision;
+    private JetInputs m_lastJetInputs;
+    private JetInputs m_jetInputs;
+    private JetRewards m_jetRewards;
+    private JetAction m_jetAction;
     private List<MissileData> m_unlaunchedMissilesData;
     private List<MissileData> m_launchedMissilesData;
 
@@ -41,11 +46,39 @@ public class JetData : IJetData {
         m_unlaunchedMissilesData = new List<MissileData>();
         m_launchedMissilesData = new List<MissileData>();
 
+        m_jetAction = new JetAction();
+        m_jetInputs = new JetInputs();
+        m_lastJetInputs = new JetInputs();
+
         BuildConfigJet(sceneObject);
+    }
+
+    public int GetNumDecoys() {
+        return m_numDecoys;
     }
 
     public Team GetTeam() {
         return m_team;
+    }
+
+    public JetCollision GetJetCollision() {
+        return m_jetCollision;
+    }
+
+    public JetAction GetJetAction() {
+        return m_jetAction;
+    }
+
+    public JetInputs GetLastJetInputs() {
+        return m_lastJetInputs;
+    }
+
+    public JetInputs GetJetInputs() {
+        return m_jetInputs;
+    }
+
+    public JetRewards GetJetRewards() {
+        return m_jetRewards;
     }
 
     public Transform GetFirstPersonViewTransform() {
@@ -64,8 +97,8 @@ public class JetData : IJetData {
         return m_object;
     }
 
-    public int GetNumDecoys() {
-        return m_numDecoys;
+    public GameObject GetColliderParentObject() {
+        return m_object.transform.Find(sceneConfig.collisionParentObjectName).gameObject;
     }
 
     public void DecrementNumDecoys() {
@@ -76,16 +109,33 @@ public class JetData : IJetData {
         m_numDecoys = numDecoys;
     }
 
-    public GameObject GetColliderParentObject() {
-        return m_object.transform.Find(sceneConfig.collisionParentObjectName).gameObject;
+    public void SetJetAction(JetAction jetAction) {
+        m_jetAction = jetAction;
+    }
+
+    public void SetLastJetInputs(JetInputs jetInputs) {
+        m_lastJetInputs = jetInputs;
+    }
+
+    public void SetJetInputs(JetInputs jetInputs) {
+        m_jetInputs = jetInputs;
+    }
+
+    public void SetJetRewards(JetRewards jetRewards) {
+        m_jetRewards = jetRewards;
     }
 
     private void BuildConfigJet(GameObject sceneObject) {
-        JetDataUtils.BuildMissileStorage(m_object, sceneConfig);
+        List <GameObject> missileArray = JetDataUtils.BuildMissileStorage(m_object, sceneConfig);
         JetDataUtils.SetLowNHighJetObjectActive(m_object, sceneConfig);
         JetDataUtils.SetLowNHighMissileStorageActive(m_object, sceneConfig);
-        JetDataUtils.SetSceneDataForJet(m_team, this, m_object, sceneConfig, sceneObject);
-        JetDataUtils.AddMissilesDataInArray(m_object, sceneConfig, m_unlaunchedMissilesData);
+        JetDataUtils.SetSceneDataForJet(m_team, this, m_object, sceneConfig, sceneObject, missileArray);
+        m_unlaunchedMissilesData = new List<MissileData>();
+        m_launchedMissilesData = new List<MissileData>();
+        foreach (GameObject missileObject in missileArray) {
+            missileObject.GetComponent<MissilePhysics>().CreateMissileData();
+            m_unlaunchedMissilesData.Add(missileObject.GetComponent<MissilePhysics>().GetMissileData());
+        }
         ConfigUnlaunchedMissiles();
 
         m_firstPersonViewTransform = m_object.transform.Find(sceneConfig.firstPersonViewName);
@@ -94,6 +144,11 @@ public class JetData : IJetData {
 
         m_object.name = m_team + " Jet";
         m_object.GetComponent<AircraftPhysics>().SkipApplyForcesFor(skipApplyForcesForSeconds);
+
+        JetAgent jetAgent = m_object.GetComponent<JetAgent>();
+        if (jetAgent != null) {
+            jetAgent.SetJetData(this);
+        }
     }
 
     public void Rebuild() {
@@ -108,12 +163,17 @@ public class JetData : IJetData {
         m_object.GetComponent<AircraftController>().ReconfigToInitialState();
         m_object.GetComponent<AircraftPhysics>().SkipApplyForcesFor(skipApplyForcesForSeconds);
 
-        JetDataUtils.BuildMissileStorage(m_object, sceneConfig);
+        List <GameObject> missileArray = JetDataUtils.BuildMissileStorage(m_object, sceneConfig);
         JetDataUtils.SetLowNHighJetObjectActive(m_object, sceneConfig);
         JetDataUtils.SetLowNHighMissileStorageActive(m_object, sceneConfig);
 
-        m_object.GetComponent<AircraftController>().AddMissilesInArray();
-        JetDataUtils.AddMissilesDataInArray(m_object, sceneConfig, m_unlaunchedMissilesData);
+        m_object.GetComponent<AircraftController>().AddMissilesInArray(missileArray);
+        m_unlaunchedMissilesData = new List<MissileData>();
+        m_launchedMissilesData = new List<MissileData>();
+        foreach (GameObject missileObject in missileArray) {
+            missileObject.GetComponent<MissilePhysics>().CreateMissileData();
+            m_unlaunchedMissilesData.Add(missileObject.GetComponent<MissilePhysics>().GetMissileData());
+        }
         ConfigUnlaunchedMissiles();
 
         Object.FindObjectOfType<TheaterPhysicsCalculation>().MarkAircraftPyhsicsForSkipping(m_indexForPhysicsCalculationArray, 0);
@@ -167,6 +227,14 @@ public class JetData : IJetData {
     public void TriggerMissilesFindTarget() {
         for (int i = 0; i < m_launchedMissilesData.Count; i++) {
             m_launchedMissilesData[i].GetMissilePhysics().TriggerFindTarget();
+        }
+    }
+
+    // Scenario ------------------------------------------
+
+    public void SetNumUnlaunchedMissiles(int numMissiles) {
+        while (m_unlaunchedMissilesData.Count > numMissiles) {
+            m_unlaunchedMissilesData.RemoveAt(0);
         }
     }
 

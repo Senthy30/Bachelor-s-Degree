@@ -22,6 +22,7 @@ public class JetCollision {
             return;
 
         bool wheelTouchedRunway = true;
+        bool wasHitByMissile = false;
 
         for (int i = 0; i < collision.contacts.Length; i++) {
             int thisColliderLayer = collision.contacts[i].thisCollider.gameObject.layer;
@@ -33,10 +34,28 @@ public class JetCollision {
 
             if (!CheckWheelTouchedRunway(thisColliderLayer, otherColliderLayer)) {
                 wheelTouchedRunway = false;
+                if (otherColliderLayer == LayerMask.NameToLayer(sceneConfig.MISSILE_LAYER_NAME)) {
+                    wasHitByMissile = true;
+                }
             }
         }
 
         if (!wheelTouchedRunway) {
+            GameObject targetJetObject = m_sceneData.GetSceneComponents().GetJetData(JetAgent.GetTargetTeam(m_team)).GetObject();
+            JetAgent targetJetAgent = targetJetObject.GetComponent<JetAgent>();
+
+            if (targetJetAgent != null) {
+                if (wasHitByMissile) {
+                    targetJetAgent.AddReward(JetAgent.NormalizeRewardValue(SceneRewards.GetRewardsConfig().destroyTargetByMissile));
+                } else {
+                    targetJetAgent.AddReward(JetAgent.NormalizeRewardValue(SceneRewards.GetRewardsConfig().targetDestroyedHimself));
+                }
+            }
+
+            JetAgent jetAgent = m_object.GetComponent<JetAgent>();
+            if (jetAgent != null && jetAgent.isActiveAndEnabled) {
+                jetAgent.ConfigureOnExplosion();
+            }
             Explode();
         }
     }
@@ -45,7 +64,7 @@ public class JetCollision {
         indexForPhysicsCalculationArray = index;
     }
 
-    private void Explode() {
+    public void Explode() {
         if (s_debugIndistractable) {
             return;
         }

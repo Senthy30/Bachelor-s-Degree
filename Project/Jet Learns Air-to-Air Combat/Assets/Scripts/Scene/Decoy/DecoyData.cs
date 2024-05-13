@@ -8,16 +8,16 @@ public class DecoyData {
     private SceneData m_sceneData;
     private GameObject m_object;
 
-    public DecoyData(GameObject decoyPrefab, Transform missileParentTransform, Vector3 position, SceneData sceneData) {
-        m_object = InstantiateDecoyObject(decoyPrefab, missileParentTransform, position);
+    public DecoyData(GameObject decoyPrefab, Transform decoysParentTransform, Vector3 position, SceneData sceneData) {
+        m_object = InstantiateDecoyObject(decoyPrefab, decoysParentTransform, position);
         m_sceneData = sceneData;
 
         m_object.GetComponent<DecoyPhysics>().SetDecoyData(this);
     }
 
-    private GameObject InstantiateDecoyObject(GameObject decoyPrefab, Transform missileParentTransform, Vector3 position) {
+    private GameObject InstantiateDecoyObject(GameObject decoyPrefab, Transform decoysParentTransform, Vector3 position) {
         return Object.Instantiate(
-            decoyPrefab, position, Quaternion.identity, missileParentTransform
+            decoyPrefab, position, Quaternion.identity, decoysParentTransform
         );
     }
 

@@ -42,16 +42,17 @@ public class SceneBuilder {
         FindParentsObjects();
 
         BuildComponents();
-
-        SetSceneComponentsBuilt();
     }
 
     private void BuildComponents() {
         AircraftCarrierData.ClearListOfValidAircraftCarrierCoords();
         m_sceneComponents = new SceneComponents(m_sceneConfig, m_sceneData);
 
+        EnemyChunksData enemyChunksData = BuildEnemyChunks();
+        enemyChunksData.GenerateAircraftCarriersChunk(TheaterData.GetNumTeams());
+
         foreach (Team team in System.Enum.GetValues(typeof(Team))) {
-            AircraftCarrierData aircraftCarrierData = BuildAircraftCarrier(team);
+            AircraftCarrierData aircraftCarrierData = BuildAircraftCarrier(team, enemyChunksData);
             JetData jetData = BuildJet(team, aircraftCarrierData.GetTransformJetSpawnPoint());
 
             jetData.SetNumDecoys(m_sceneConfig.numDecoysPerJet);
@@ -60,11 +61,15 @@ public class SceneBuilder {
             m_sceneComponents.AddHeatEmission(new HeatEmission(jetData.GetObject().transform, 1));
         }
 
-        m_sceneComponents.SetEnemyChunksData(BuildEnemyChunks());
+        m_sceneComponents.SetEnemyChunksData(enemyChunksData);
         m_sceneComponents.SetBoxData(BuildBox());
         m_sceneComponents.SetWaterData(BuildWater());
         m_sceneComponents.SetMissilePhysicsHeatEmission();
         m_sceneComponents.SetJetMissilesSceneParentObject(m_missileParentTransform);
+        m_sceneComponents.BuildEnemiesData();
+
+        SetSceneComponentsBuilt();
+        SceneScenario.SetScenario(m_sceneData, GenerateScenario());
     }
 
     private void RebuildComponents() {
@@ -75,7 +80,11 @@ public class SceneBuilder {
 
         m_sceneComponents.ClearMissiles();
         m_sceneComponents.ClearHeatEmission();
+        m_sceneComponents.ClearDecoys();
         AircraftCarrierData.ClearListOfValidAircraftCarrierCoords();
+
+        EnemyChunksData enemyChunksData = m_sceneComponents.GetEnemyChunksData();
+        enemyChunksData.GenerateAircraftCarriersChunk(TheaterData.GetNumTeams());
 
         foreach (Team team in System.Enum.GetValues(typeof(Team))) { 
             RebuildAircraftCarrier(team);
@@ -87,14 +96,16 @@ public class SceneBuilder {
         m_sceneComponents.SetMissilePhysicsHeatEmission();
         m_sceneComponents.SetJetMissilesSceneParentObject(m_missileParentTransform);
         Object.FindObjectOfType<TheaterData>().ChangeViewModeIfViewMissileIsActive();
+
+        SceneScenario.SetScenario(m_sceneData, GenerateScenario());
     }
 
     private void SetSceneComponentsBuilt() {
         m_sceneData.SetSceneComponents(m_sceneComponents);
     }
 
-    private AircraftCarrierData BuildAircraftCarrier(Team team) {
-        return new AircraftCarrierData(m_idScene, team, m_aircraftCarrierParentTransform);
+    private AircraftCarrierData BuildAircraftCarrier(Team team, EnemyChunksData enemyChunksData) {
+        return new AircraftCarrierData(m_idScene, team, m_aircraftCarrierParentTransform, enemyChunksData);
     }
 
     private void RebuildAircraftCarrier(Team team) {
@@ -111,6 +122,11 @@ public class SceneBuilder {
         jetData.Rebuild();
         jetData.SetNumDecoys(m_sceneConfig.numDecoysPerJet);
         m_sceneComponents.AddHeatEmission(new HeatEmission(jetData.GetObject().transform, 1));
+
+        JetAgent jetAgent = jetData.GetObject().GetComponent<JetAgent>();
+        if (jetAgent != null) {
+            jetAgent.ConfigureOnEpisodeEnd();
+        }
     }
 
     private BoxData BuildBox() {
@@ -133,6 +149,20 @@ public class SceneBuilder {
         decoyData.SetHeatEmission(heatEmission);
 
         return decoyData;
+    }
+
+    private Scenario GenerateScenario() {
+        Scenario sceneDataTypeScenario = m_sceneData.GetScenario();
+
+        if (sceneDataTypeScenario == Scenario.RANDOM) {
+            int randomValue = UnityEngine.Random.Range(0, 10);
+            if (randomValue < 5)
+                return Scenario.TAKE_OFF;
+
+            return (Scenario)UnityEngine.Random.Range((int)Scenario.BLUE_CHASING, (int)Scenario.MAX);
+        }
+
+        return sceneDataTypeScenario;
     }
 
     private void DeleteAllDecoys() {

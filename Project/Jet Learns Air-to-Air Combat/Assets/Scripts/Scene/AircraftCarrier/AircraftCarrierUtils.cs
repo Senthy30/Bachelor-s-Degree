@@ -5,11 +5,13 @@ using UnityEngine;
 public static class AircraftCarrierUtils {
 
     public static GameObject InstantiateAircraftCarrierObject(
-        int idScene, Team team, List<Vector2Int> listOfValidAircraftCarrierCoords, 
+        int idScene, Team team, EnemyChunksData enemyChunksData, 
         Transform aircraftCarrierParentTransform, SceneConfig sceneConfig
     ) {
-        Vector3 teamPosition = GetAircraftCarrierPosition(idScene, team, listOfValidAircraftCarrierCoords, sceneConfig);
-        Quaternion teamRotation = GetAircraftCarrierRotation(idScene, team);
+        EnemyChunksData.ComponentInChunkData aircraftData = enemyChunksData.GetAircraftCarriersData(team);
+
+        Vector3 teamPosition = aircraftData.position;
+        Quaternion teamRotation = aircraftData.rotation;
 
         GameObject aircraftCarrierObject = Object.Instantiate(
             sceneConfig.aircraftCarrierGameObject, teamPosition, teamRotation, aircraftCarrierParentTransform

@@ -20,6 +20,10 @@ public class BoxData {
         m_object.transform.localPosition = new Vector3(0f, sceneConfig.sceneSize.y * sceneConfig.GetSizePlane() / 2f - 0.1f, 0f);
     }
 
+    public GameObject GetObject() {
+        return m_object;
+    }
+
     public static void SetSceneConfig(SceneConfig config) {
         sceneConfig = config;
     }

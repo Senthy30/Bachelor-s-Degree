@@ -11,6 +11,7 @@ public class TheaterData : MonoBehaviour {
     private static TheaterAircraftsCarrierData theaterAircraftsCarrierData;
 
     [SerializeField] private Resolution m_resolution;
+    [SerializeField] private Scenario m_scenario;
     [SerializeField] private bool m_rebuildScene = false;
     [SerializeField] private Vector3Int m_numScenes;
     private int m_totalScenes;
@@ -28,9 +29,12 @@ public class TheaterData : MonoBehaviour {
     [SerializeField] private List<CinemachineVirtualCamera> m_firstPersonCinemachinesArray = null;
     [SerializeField] private List<CinemachineFreeLook> m_thirdPersonCinemachinesArray = null;
 
+    [SerializeField] private RewardsConfig m_rewardsConfig;
+
     [Header("Scene")]
     [SerializeField] private JetController m_jetController;
     [SerializeField] private GameObject m_scenePrefab;
+    private GameObject m_lastJetViewObject;
 
     private int m_currentSceneView;
     private Team m_currentTeamView;
@@ -42,6 +46,7 @@ public class TheaterData : MonoBehaviour {
 
     private void Awake() {
         BuildTheater(false);
+        //Time.timeScale = 5f;
     }
 
     private void Start() {
@@ -59,7 +64,9 @@ public class TheaterData : MonoBehaviour {
 
     private void DefaultTheaterConfiguration(bool editorMode) {
         TheaterBuilder.SetEditorMode(editorMode);
+        AircraftController.SetTheaterData(this);
         SceneData.SetNextIdScene(0);
+        SceneRewards.rewardsConfig = m_rewardsConfig;
 
         resolution = m_resolution;
         m_totalScenes = m_numScenes.x * m_numScenes.y * m_numScenes.z;
@@ -270,9 +277,21 @@ public class TheaterData : MonoBehaviour {
     }
 
     private void SetAircraftControllerOfCurrentJet() {
-        m_jetController.SetCurrentAircraftController(
-            m_theaterComponents.GetScene(m_currentSceneView).GetSceneComponents().GetJetData(m_currentTeamView).GetObject().GetComponent<AircraftController>()
-        );
+        if (m_lastJetViewObject != null && m_lastJetViewObject.GetComponent<JetAgent>() != null)
+            m_lastJetViewObject.GetComponent<JetAgent>().SetControlledByPlayer(false);
+
+        GameObject jetObject = m_theaterComponents.GetScene(m_currentSceneView).GetSceneComponents().GetJetData(m_currentTeamView).GetObject();
+
+        if (jetObject.GetComponent<JetAgent>() != null) {
+            m_jetController.SetCurrentAircraftController(null);
+            jetObject.GetComponent<JetAgent>().SetControlledByPlayer(true);
+        } else {
+            m_jetController.SetCurrentAircraftController(
+                jetObject.GetComponent<AircraftController>()
+            );
+        }
+
+        m_lastJetViewObject = jetObject;
     }
 
     // Getters --------------------------------------------
@@ -321,6 +340,10 @@ public class TheaterData : MonoBehaviour {
         SceneComponents sceneComponents = m_theaterComponents.GetScene(m_currentSceneView).GetSceneComponents();
 
         return sceneComponents.GetLaunchedMissilesCount() > 0;
+    }
+
+    public Scenario GetScenario() {
+        return m_scenario;
     }
 
     public static int GetNumTeams() {

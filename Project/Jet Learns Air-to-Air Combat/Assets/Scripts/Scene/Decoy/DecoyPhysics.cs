@@ -24,9 +24,9 @@ public class DecoyPhysics : MonoBehaviour {
         m_collisionsIgnored = new List<Collider>();
     }
 
-    private void Update() {
+    private void FixedUpdate() {
         if (!m_detachedCompleted) {
-            m_currentTimeDetach += Time.deltaTime;
+            m_currentTimeDetach += Time.fixedDeltaTime;
             if (m_currentTimeDetach >= m_timeDetach) {
                 for (int i = 0; i < m_collisionsIgnored.Count; i++) {
                     Physics.IgnoreCollision(m_collider, m_collisionsIgnored[i], false);
@@ -50,8 +50,8 @@ public class DecoyPhysics : MonoBehaviour {
         }
     }
 
-    public void SetVelocity(Vector3 velocity) {
-        m_rigidbody.velocity = velocity - transform.up * m_speedAtDetach;
+    public void SetVelocity(Vector3 velocity, Vector3 jetDownDirection) {
+        m_rigidbody.velocity = velocity + jetDownDirection * m_speedAtDetach;
     }
 
     public void SetCollisionsIgnoreAdded() {

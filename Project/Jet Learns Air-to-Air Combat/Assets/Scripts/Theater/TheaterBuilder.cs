@@ -13,6 +13,7 @@ public class TheaterBuilder {
     private Vector3 m_centerFirstScene;
 
     private SceneConfig m_sceneConfig;
+    private TheaterData m_theaterData;
     private TheaterComponents m_theaterComponents;
     private TheaterPhysicsCalculation m_theaterPhysicsCalculation;
     private GameObject m_theaterObject;
@@ -23,6 +24,7 @@ public class TheaterBuilder {
         m_theaterObject = theaterObject;
         m_sceneObjectPrefab = sceneObjectPrefab;
         m_sceneConfig = sceneObjectPrefab.GetComponent<SceneData>().GetSceneConfig();
+        m_theaterData = theaterObject.GetComponent<TheaterData>();
         m_theaterPhysicsCalculation = theaterObject.GetComponent<TheaterPhysicsCalculation>();
         m_size = CalculateSizeTheater();
         m_centerFirstScene = CalculateCenterFirstScene();
@@ -47,6 +49,8 @@ public class TheaterBuilder {
     }
 
     private void BuildScene(int currentSceneToBuild, Vector3 positionScene) {
+        SceneData.SetRandomScenario(m_theaterData.GetScenario() == Scenario.RANDOM);
+
         GameObject sceneObject = InstantiateScene(currentSceneToBuild, positionScene);
         SceneData sceneData = sceneObject.GetComponent<SceneData>();
 
